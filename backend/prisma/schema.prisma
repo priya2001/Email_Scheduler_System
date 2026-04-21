@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Sender table - stores email accounts/senders
+model Sender {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relation
+  emails    Email[]
+
+  @@map("senders")
+  @@index([email])
+}
+
+// Email table - stores scheduled and sent emails
+model Email {
+  id            String   @id @default(uuid())
+  toEmail       String
+  subject       String
+  body          String   @db.Text
+  scheduledTime DateTime
+  status        EmailStatus @default(PENDING)
+  senderId      String
+  sender        Sender   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sentAt        DateTime?
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("emails")
+  @@index([senderId])
+  @@index([scheduledTime])
+  @@index([status])
+  @@index([toEmail])
+  @@index([createdAt])
+}
+
+// Email status enum
+enum EmailStatus {
+  PENDING
+  SENT
+  FAILED
+}
