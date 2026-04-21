@@ -4,6 +4,7 @@ interface Email {
   id: string;
   recipient: string;
   subject: string;
+  preview?: string;
   scheduledTime: string;
   status: 'scheduled' | 'sent' | 'draft';
 }
@@ -35,38 +36,32 @@ export default function EmailList({ emails, category }: EmailListProps) {
           className="bg-white px-8 py-4 hover:bg-gray-50 cursor-pointer transition border-l-4 border-l-transparent hover:border-l-green-600"
         >
           <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0 mt-1">
                   {email.recipient.charAt(0).toUpperCase()}
                 </div>
-                <div className="flex-1">
-                  <p className="font-semibold text-gray-800">To: {email.recipient}</p>
-                  <p className="text-sm text-gray-600 truncate">{email.subject}</p>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-gray-700">To: <span className="font-semibold">{email.recipient}</span></p>
+                  <div className="flex items-center gap-2 mt-1 min-w-0">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600 font-medium">
+                      {category === 'sent' && '✓ Sent'}
+                      {category === 'scheduled' && '🕐 Scheduled'}
+                      {category === 'draft' && '✎ Draft'}
+                    </span>
+                    <p className="text-sm font-medium text-gray-900">{email.subject}</p>
+                  </div>
+                  {email.preview && (
+                    <p className="text-sm text-gray-600 mt-1 truncate">{email.preview}</p>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              {category === 'scheduled' && (
-                <div className="flex items-center gap-2 bg-orange-50 px-3 py-1 rounded-full">
-                  <span className="text-orange-500 text-sm font-medium">⏰</span>
-                  <span className="text-sm text-orange-700 font-medium">{email.scheduledTime}</span>
-                </div>
-              )}
-              {category === 'sent' && (
-                <div className="flex items-center gap-2 bg-green-50 px-3 py-1 rounded-full">
-                  <span className="text-green-500 text-sm font-medium">✓</span>
-                  <span className="text-sm text-green-700 font-medium">Sent</span>
-                </div>
-              )}
-              {category === 'draft' && (
-                <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded-full">
-                  <span className="text-gray-500 text-sm font-medium">✎</span>
-                  <span className="text-sm text-gray-700 font-medium">Draft</span>
-                </div>
-              )}
-              <button className="text-gray-400 hover:text-red-500 transition">⋯</button>
-            </div>
+            {category === 'scheduled' && (
+              <div className="flex items-center gap-2 bg-orange-50 px-3 py-1 rounded-full text-sm text-orange-700 font-medium flex-shrink-0">
+                ⏰ {email.scheduledTime}
+              </div>
+            )}
           </div>
         </div>
       ))}

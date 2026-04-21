@@ -10,27 +10,23 @@ const prismaClient =
   new PrismaClient({
     log: [
       {
-        emit: 'event',
-        level: 'query',
-      },
-      {
         emit: 'stdout',
-        level: 'info',
+        level: 'error',
       },
       {
         emit: 'stdout',
         level: 'warn',
       },
-      {
-        emit: 'stdout',
-        level: 'error',
-      },
     ],
+    errorFormat: 'pretty',
   });
 
-// Log Prisma queries in development
-// Note: Query logging is disabled due to strict TypeScript typing
-// You can enable it by using prisma.$extends if needed
+// Handle Prisma client errors
+prismaClient.$on('error', (event) => {
+  logger.error('Prisma client error:', event);
+});
+
+// Log Prisma client initialization
 if (process.env.NODE_ENV !== 'production') {
   logger.debug('Prisma client initialized in development mode');
 }

@@ -6,6 +6,7 @@ import { logger } from './utils/logger';
 import { requestLogger } from './middleware/logger';
 import { errorHandler, AppError } from './middleware/errorHandler';
 import healthRoutes from './routes/health';
+import emailRoutes from './routes/emails';
 
 const app = express();
 
@@ -33,6 +34,9 @@ app.use(requestLogger);
 
 // Health check routes
 app.use('/', healthRoutes);
+
+// Email routes
+app.use('/api/emails', emailRoutes);
 
 // API routes will be added here
 app.use('/api', (_req: Request, res: Response) => {
@@ -74,9 +78,9 @@ async function testDatabaseConnection(): Promise<void> {
     logger.info('✅ Database connection successful');
   } catch (error) {
     logger.error('❌ Database connection failed', error);
-    // Don't exit immediately in development
+    // Don't exit - allow the server to keep running for health checks
     if (environment.nodeEnv === 'production') {
-      process.exit(1);
+      logger.warn('Running in production mode but database connection failed');
     }
   }
 }

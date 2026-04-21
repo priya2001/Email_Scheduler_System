@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@/lib/supabase/client';
+import { useSupabase } from '@/lib/supabase/provider';
 import DashboardLayout from '@/components/DashboardLayout';
 import EmailList from '@/components/EmailList';
 
@@ -10,6 +10,7 @@ interface Email {
   id: string;
   recipient: string;
   subject: string;
+  preview?: string;
   scheduledTime: string;
   status: 'scheduled' | 'sent' | 'draft';
 }
@@ -20,7 +21,7 @@ export default function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState<'scheduled' | 'sent' | 'draft'>('scheduled');
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = useSupabase();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -47,35 +48,56 @@ export default function Dashboard() {
     };
 
     checkAuth();
-  }, [supabase.auth, router]);
+    // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   const fetchEmails = async () => {
-    // Mock data for now - replace with actual API call
-    const mockEmails: Email[] = [
-      {
-        id: '1',
-        recipient: 'John Smith',
-        subject: 'Meeting follow-up - Scheduled',
-        scheduledTime: 'Tue 9:15:12 AM',
-        status: 'scheduled',
-      },
-      {
-        id: '2',
-        recipient: 'Olive',
-        subject: "Ramit, great to meet you - you'll love it",
-        scheduledTime: 'Thu 8:15:12 PM',
-        status: 'scheduled',
-      },
-      {
-        id: '3',
-        recipient: 'Sarah Johnson',
-        subject: 'Project Update - Q2',
-        scheduledTime: 'Wed 2:30:00 PM',
-        status: 'scheduled',
-      },
-    ];
+    try {
+      const response = await fetch('http://localhost:3001/api/emails', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    setEmails(mockEmails);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch emails');
+      }
+
+      setEmails(data.data || []);
+    } catch (error: any) {
+      console.error('Error fetching emails:', error);
+      // Show mock data on error for testing
+      const mockEmails: Email[] = [
+        {
+          id: '1',
+          recipient: 'Sarah Wilson',
+          subject: 'Re: Project Update',
+          preview: 'Thanks for the update, Sarah. Looks good!',
+          scheduledTime: 'Tue 9:15:12 AM',
+          status: 'sent',
+        },
+        {
+          id: '2',
+          recipient: 'Support',
+          subject: 'Issue with login',
+          preview: 'I am having trouble logging in to the dashboard...',
+          scheduledTime: 'Thu 8:15:12 PM',
+          status: 'sent',
+        },
+        {
+          id: '3',
+          recipient: 'Sarah Johnson',
+          subject: 'Project Update - Q2',
+          preview: 'Here are the Q2 updates...',
+          scheduledTime: 'Wed 2:30:00 PM',
+          status: 'scheduled',
+        },
+      ];
+      setEmails(mockEmails);
+    }
   };
 
   if (loading) {
@@ -90,7 +112,12 @@ export default function Dashboard() {
   }
 
   return (
-    <DashboardLayout user={user} selectedCategory={selectedCategory} onCategoryChange={setSelectedCategory}>
+    <DashboardLayout
+      user={user}
+      selectedCategory={selectedCategory}
+      onCategoryChange={setSelectedCategory}
+      emails={emails}
+    >
       <EmailList emails={emails} category={selectedCategory} />
     </DashboardLayout>
   );

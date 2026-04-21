@@ -46,7 +46,15 @@ export const environment = {
 };
 
 // Validate required environment variables
-const requiredVars = ['SMTP_USER', 'SMTP_PASSWORD'];
+const requiredVars = ['DATABASE_URL', 'SMTP_USER', 'SMTP_PASSWORD'];
+const missingVars = requiredVars.filter(v => !process.env[v]);
+
+if (missingVars.length > 0) {
+  console.warn(`⚠️ Missing environment variables: ${missingVars.join(', ')}`);
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`Missing required environment variables: ${missingVars.join(', ')}`);
+  }
+}
 
 function validateEnvironment(): void {
   const missing: string[] = [];
