@@ -214,7 +214,11 @@ export default function ComposeEmail() {
             type="button"
             onClick={() => setShowSendLater(!showSendLater)}
             title="Schedule"
-            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+              scheduledTime
+                ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200'
+                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+            }`}
           >
             <Clock3 className="h-5 w-5" />
           </button>
