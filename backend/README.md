@@ -117,6 +117,8 @@ Run the worker in a separate terminal:
 npm run dev:worker
 ```
 
+Make sure both the API server and worker are running. BullMQ will not process jobs unless the worker process is active.
+
 ### 6. Open Bull Board
 
 The queue dashboard is available at:
