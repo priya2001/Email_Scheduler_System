@@ -150,7 +150,7 @@ export const createEmail = async (req: Request, res: Response, next: NextFunctio
 
     const sender = await resolveSender(from);
     const uploadedAttachments = attachmentDrafts.length > 0
-      ? await uploadAttachmentsToStorage(req, res, attachmentDrafts)
+      ? await uploadAttachmentsToStorage(attachmentDrafts)
       : [];
 
     try {
@@ -186,7 +186,7 @@ export const createEmail = async (req: Request, res: Response, next: NextFunctio
       });
     } catch (createError) {
       if (uploadedAttachments.length > 0) {
-        await deleteUploadedAttachments(req, res, uploadedAttachments);
+        await deleteUploadedAttachments(uploadedAttachments);
       }
       throw createError;
     }
@@ -228,7 +228,7 @@ export const createBulkEmails = async (req: Request, res: Response, next: NextFu
     const batchId = uuidv4();
     const intervalMs = computeBulkIntervalMs(delayBetweenEmails, hourlyLimit);
     const uploadedAttachments = attachmentDrafts.length > 0
-      ? await uploadAttachmentsToStorage(req, res, attachmentDrafts)
+      ? await uploadAttachmentsToStorage(attachmentDrafts)
       : [];
 
     try {
@@ -295,7 +295,7 @@ export const createBulkEmails = async (req: Request, res: Response, next: NextFu
       });
     } catch (createError) {
       if (uploadedAttachments.length > 0) {
-        await deleteUploadedAttachments(req, res, uploadedAttachments);
+        await deleteUploadedAttachments(uploadedAttachments);
       }
       throw createError;
     }

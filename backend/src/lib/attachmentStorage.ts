@@ -1,6 +1,5 @@
-import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { createSupabaseAdminClient, createSupabaseRouteClient } from './supabase';
+import { createSupabaseAdminClient } from './supabase';
 import { environment } from '../config/environment';
 
 export interface IncomingAttachmentDraft {
@@ -71,16 +70,14 @@ async function ensureAttachmentBucketExists(): Promise<void> {
 }
 
 export async function uploadAttachmentsToStorage(
-  req: Request,
-  res: Response,
   attachments: IncomingAttachmentDraft[],
 ): Promise<StoredAttachmentMetadata[]> {
   if (!attachments.length) {
     return [];
   }
 
-  const supabase = createSupabaseRouteClient(req, res);
   const storageBucket = environment.supabase.storageBucket || 'email-attachments';
+  const supabase = createSupabaseAdminClient();
 
   try {
     await ensureAttachmentBucketExists();
@@ -124,15 +121,13 @@ export async function uploadAttachmentsToStorage(
 }
 
 export async function deleteUploadedAttachments(
-  req: Request,
-  res: Response,
   attachments: StoredAttachmentMetadata[],
 ): Promise<void> {
   if (!attachments.length) {
     return;
   }
 
-  const supabase = createSupabaseRouteClient(req, res);
+  const supabase = createSupabaseAdminClient();
   const groupedByBucket = new Map<string, string[]>();
 
   for (const attachment of attachments) {
