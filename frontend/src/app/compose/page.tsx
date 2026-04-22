@@ -1,44 +1,65 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import {
+  ArrowLeft,
+  CalendarDays,
+  ChevronDown,
+  Clock3,
+  Paperclip,
+  Send,
+} from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
-const ReactQuill = dynamic(() => import('react-quill').then(mod => {
-  require('react-quill/dist/quill.snow.css');
-  return mod;
-}), { ssr: false });
+const ReactQuill = dynamic(
+  () =>
+    import('react-quill').then((mod) => {
+      require('react-quill/dist/quill.snow.css');
+      return mod;
+    }),
+  { ssr: false },
+);
 
 const modules = {
   toolbar: [
     ['undo', 'redo'],
-    [{ 'font': ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Verdana'] }],
-    [{ 'size': ['small', false, 'large', 'huge'] }],
-    [{ 'header': [1, 2, 3, false] }],
+    [{ font: ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Verdana'] }],
+    [{ size: ['small', false, 'large', 'huge'] }],
+    [{ header: [1, 2, 3, false] }],
     ['bold', 'italic', 'underline', 'strike'],
-    [{ 'script': 'sub'}, { 'script': 'super' }],
+    [{ script: 'sub' }, { script: 'super' }],
     ['blockquote', 'code-block'],
-    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    [{ 'indent': '-1'}, { 'indent': '+1' }],
-    [{ 'color': [] }, { 'background': [] }],
-    [{ 'align': [] }],
+    [{ list: 'ordered' }, { list: 'bullet' }],
+    [{ indent: '-1' }, { indent: '+1' }],
+    [{ color: [] }, { background: [] }],
+    [{ align: [] }],
     ['link', 'image'],
-    ['clean']
+    ['clean'],
   ],
 };
 
 const formats = [
-  'undo', 'redo',
-  'font', 'size',
+  'undo',
+  'redo',
+  'font',
+  'size',
   'header',
-  'bold', 'italic', 'underline', 'strike',
+  'bold',
+  'italic',
+  'underline',
+  'strike',
   'script',
-  'blockquote', 'code-block',
-  'list', 'indent',
-  'color', 'background',
+  'blockquote',
+  'code-block',
+  'list',
+  'indent',
+  'color',
+  'background',
   'align',
-  'link', 'image'
+  'link',
+  'image',
 ];
 
 export default function ComposeEmail() {
@@ -54,17 +75,18 @@ export default function ComposeEmail() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
 
-  const getPresetTimes = () => {
+  const presetTimes = useMemo(() => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(0, 0, 0, 0);
+
     return [
       { label: 'Tomorrow', value: new Date(tomorrow).toISOString() },
       { label: 'Tomorrow, 10:00 AM', value: new Date(new Date(tomorrow).setHours(10, 0, 0, 0)).toISOString() },
       { label: 'Tomorrow, 11:00 AM', value: new Date(new Date(tomorrow).setHours(11, 0, 0, 0)).toISOString() },
       { label: 'Tomorrow, 3:00 PM', value: new Date(new Date(tomorrow).setHours(15, 0, 0, 0)).toISOString() },
     ];
-  };
+  }, []);
 
   const handleAddRecipient = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && recipientInput.trim()) {
@@ -84,22 +106,9 @@ export default function ComposeEmail() {
     setScheduledTime(time);
   };
 
-  const handleSendNow = async () => {
-    setScheduledTime('');
-    await performSend();
-  };
-
-  const handleSendLater = async () => {
-    if (!scheduledTime) {
-      setError('Please select a date and time to send later');
-      return;
-    }
-    await performSend();
-    setShowSendLater(false);
-  };
-
   const performSend = async () => {
     setError('');
+
     if (recipients.length === 0) {
       setError('Please add at least one recipient');
       return;
@@ -108,6 +117,7 @@ export default function ComposeEmail() {
       setError('Please enter subject');
       return;
     }
+
     setIsSending(true);
     try {
       const response = await apiFetch('/api/emails/bulk', {
@@ -140,140 +150,186 @@ export default function ComposeEmail() {
     }
   };
 
-  const presetTimes = getPresetTimes();
+  const handleSendNow = async () => {
+    setScheduledTime('');
+    await performSend();
+  };
+
+  const handleSendLater = async () => {
+    if (!scheduledTime) {
+      setError('Please select a date and time to send later');
+      return;
+    }
+
+    await performSend();
+    setShowSendLater(false);
+  };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Top Header */}
-      <header className="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-white text-slate-900">
+      <header className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
         <div className="flex items-center gap-4">
-          <button onClick={() => router.back()} className="text-gray-600 hover:text-gray-900 text-xl">←</button>
-          <h1 className="text-lg font-medium text-gray-900">Compose New Email</h1>
+          <button
+            onClick={() => router.back()}
+            aria-label="Go back"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100"
+            type="button"
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </button>
+          <h1 className="text-[28px] font-normal tracking-[-0.03em] text-slate-900">
+            Compose New Email
+          </h1>
         </div>
-        
-        <div className="flex items-center gap-3">
-          <button className="p-2 hover:bg-gray-100 rounded text-gray-600" title="Attach file">📎</button>
-          <button onClick={() => setShowSendLater(!showSendLater)} className="p-2 hover:bg-gray-100 rounded text-gray-600" title="Schedule">⏱️</button>
-          <button onClick={handleSendNow} disabled={isSending} className="px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded transition disabled:opacity-50 disabled:cursor-not-allowed">
+
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            title="Attach file"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <Paperclip className="h-6 w-6" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowSendLater(!showSendLater)}
+            title="Schedule"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <Clock3 className="h-6 w-6" />
+          </button>
+          <button
+            type="button"
+            onClick={handleSendNow}
+            disabled={isSending}
+            className="inline-flex h-12 items-center justify-center rounded-full border border-emerald-500 px-8 text-[18px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Send className="mr-2 h-4.5 w-4.5" />
             {isSending ? 'Sending...' : 'Send'}
           </button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left Compose Area */}
-        <div className="flex-1 overflow-y-auto">
-          {error && (
-            <div className="px-6 pt-4 pb-2">
-              <div className="p-3 bg-red-50 border border-red-200 text-red-600 rounded text-sm">{error}</div>
-            </div>
-          )}
-
-          <div className="px-6 py-4 space-y-4">
-            {/* From Field */}
-            <div className="flex items-center gap-8">
-              <label className="w-16 text-sm font-medium text-gray-700">From</label>
-              <div className="flex-1 flex items-center gap-2">
-                <span className="text-gray-700">oliver.brown@domain.io</span>
-                <button className="text-gray-400 hover:text-gray-600">▼</button>
+      <div className="relative flex min-h-[calc(100vh-73px)] overflow-hidden bg-white">
+        <div className="min-w-0 flex-1 overflow-y-auto px-6 py-10">
+          <div className="mx-auto w-full max-w-[1280px]">
+            {error && (
+              <div className="mb-6 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                {error}
               </div>
-            </div>
+            )}
 
-            {/* To Field */}
-            <div className="flex items-start gap-8">
-              <label className="w-16 text-sm font-medium text-gray-700 pt-2">To</label>
-              <div className="flex-1">
-                <div className="flex flex-wrap gap-2 items-center border border-gray-300 rounded px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-                  {recipients.map((email) => (
-                    <div key={email} className="bg-gray-200 text-gray-800 px-3 py-1 rounded text-sm flex items-center gap-2">
-                      {email}
-                      <button onClick={() => handleRemoveRecipient(email)} className="text-gray-600 hover:text-gray-800 font-bold">×</button>
-                    </div>
-                  ))}
+            <div className="space-y-8">
+              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
+                <label className="text-[16px] text-slate-900">From</label>
+                <div className="inline-flex max-w-[320px] items-center justify-between rounded-xl bg-slate-100 px-4 py-3 text-[18px] text-slate-800">
+                  <span className="truncate">oliver.brown@domain.io</span>
+                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-slate-400" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
+                <label className="text-[16px] text-slate-900">To</label>
+                <div className="min-w-0 border-b border-slate-200 pb-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {recipients.map((email) => (
+                      <div key={email} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[14px] text-slate-800">
+                        {email}
+                        <button
+                          onClick={() => handleRemoveRecipient(email)}
+                          className="flex h-4 w-4 items-center justify-center rounded-full text-slate-400 transition hover:text-slate-700"
+                          type="button"
+                          aria-label={`Remove ${email}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    <input
+                      type="email"
+                      placeholder="recipient@example.com"
+                      value={recipientInput}
+                      onChange={(e) => setRecipientInput(e.target.value)}
+                      onKeyDown={handleAddRecipient}
+                      className="min-w-[220px] flex-1 border-0 bg-transparent text-[18px] text-slate-900 placeholder:text-slate-400 outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
+                <label className="text-[16px] text-slate-900">Subject</label>
+                <input
+                  type="text"
+                  placeholder="Subject"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  className="w-full border-0 border-b border-slate-200 bg-transparent px-0 pb-3 text-[18px] text-slate-900 placeholder:text-slate-400 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
+                <div className="text-[16px] text-slate-900">Delay between 2 emails</div>
+                <div className="flex items-center gap-10">
                   <input
-                    type="email"
-                    placeholder="recipient@example.com"
-                    value={recipientInput}
-                    onChange={(e) => setRecipientInput(e.target.value)}
-                    onKeyPress={handleAddRecipient}
-                    className="flex-1 outline-none text-sm py-1 px-2 bg-transparent"
+                    type="number"
+                    value={delayBetweenEmails}
+                    onChange={(e) => setDelayBetweenEmails(e.target.value)}
+                    className="h-12 w-[92px] rounded-xl border border-slate-200 bg-white px-3 text-center text-[16px] text-slate-600 outline-none focus:border-slate-300"
+                  />
+                  <div className="text-[16px] text-slate-900">Hourly Limit</div>
+                  <input
+                    type="number"
+                    value={hourlyLimit}
+                    onChange={(e) => setHourlyLimit(e.target.value)}
+                    className="h-12 w-[92px] rounded-xl border border-slate-200 bg-white px-3 text-center text-[16px] text-slate-600 outline-none focus:border-slate-300"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-[18px] bg-slate-50/70 p-3">
+                <div className="min-h-[560px] rounded-[18px] bg-white">
+                  <ReactQuill
+                    theme="snow"
+                    value={body}
+                    onChange={setBody}
+                    modules={modules}
+                    formats={formats}
+                    placeholder="Type Your Reply..."
+                    style={{ height: '100%' }}
                   />
                 </div>
               </div>
             </div>
-
-            {/* Subject Field */}
-            <div className="flex items-center gap-8">
-              <label className="w-16 text-sm font-medium text-gray-700">Subject</label>
-              <input
-                type="text"
-                placeholder="Subject"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="flex-1 outline-none text-sm border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-
-            {/* Delay and Hourly Limit */}
-            <div className="flex items-center gap-8 pt-2">
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-700">Delay between emails (sec)</label>
-                <input type="number" value={delayBetweenEmails} onChange={(e) => setDelayBetweenEmails(e.target.value)} className="w-16 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm" />
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-700">Hourly limit</label>
-                <input type="number" value={hourlyLimit} onChange={(e) => setHourlyLimit(e.target.value)} className="w-16 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm" />
-              </div>
-            </div>
-
-            {/* Formatting Toolbar & Compose Area */}
-            <div className="pt-4 border-t border-gray-200">
-              <div style={{ height: '400px' }}>
-                <ReactQuill
-                  theme="snow"
-                  value={body}
-                  onChange={setBody}
-                  modules={modules}
-                  formats={formats}
-                  placeholder="Type Your Reply..."
-                  style={{ height: '100%' }}
-                />
-              </div>
-            </div>
-            <div className="h-24"></div>
           </div>
         </div>
 
-        {/* Right Sidebar - Send Later */}
         {showSendLater && (
-          <div className="w-80 border-l border-gray-200 bg-gray-50 p-6 overflow-y-auto flex flex-col">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Send Later</h2>
+          <aside className="absolute right-6 top-6 z-20 w-[470px] rounded-xl border border-slate-200 bg-white shadow-[0_6px_18px_rgba(15,23,42,0.12)]">
+            <div className="p-5">
+              <h2 className="text-[22px] font-medium text-slate-900">Send Later</h2>
 
-            {/* Pick Date & Time */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Pick date & time</label>
-              <input
-                type="datetime-local"
-                value={scheduledTime}
-                onChange={(e) => setScheduledTime(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-              />
-            </div>
+              <div className="mt-8">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                  <input
+                    type="datetime-local"
+                    value={scheduledTime}
+                    onChange={(e) => setScheduledTime(e.target.value)}
+                    className="w-full bg-transparent text-[18px] text-slate-500 outline-none placeholder:text-slate-400"
+                  />
+                  <CalendarDays className="ml-3 h-5 w-5 shrink-0 text-slate-400" />
+                </div>
+              </div>
 
-            {/* Suggested Times */}
-            <div className="mb-6 flex-1">
-              <p className="text-xs font-medium text-gray-600 mb-2">Suggested times:</p>
-              <div className="space-y-2">
+              <div className="mt-6 space-y-4">
                 {presetTimes.map((preset) => (
                   <button
                     key={preset.value}
                     onClick={() => handleSelectTime(preset.value)}
-                    className={`w-full text-left px-3 py-2 rounded text-sm transition border ${
-                      scheduledTime === preset.value
-                        ? 'bg-blue-100 text-blue-700 border-blue-300'
-                        : 'bg-white text-gray-700 hover:bg-gray-100 border-gray-200'
+                    className={`block w-full text-left text-[18px] text-slate-600 transition hover:text-slate-900 ${
+                      scheduledTime === preset.value ? 'text-slate-900' : ''
                     }`}
+                    type="button"
                   >
                     {preset.label}
                   </button>
@@ -281,26 +337,27 @@ export default function ComposeEmail() {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-2 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-end gap-8 border-t border-slate-200 px-5 py-4">
               <button
                 onClick={() => {
                   setShowSendLater(false);
                   setScheduledTime('');
                 }}
-                className="flex-1 px-4 py-2 text-gray-700 hover:bg-gray-200 rounded font-medium text-sm"
+                className="text-[18px] text-slate-900 transition hover:text-slate-700"
+                type="button"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSendLater}
                 disabled={!scheduledTime || isSending}
-                className="flex-1 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="inline-flex h-12 items-center justify-center rounded-full border border-emerald-500 px-8 text-[18px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                type="button"
               >
                 {isSending ? 'Scheduling...' : 'Done'}
               </button>
             </div>
-          </div>
+          </aside>
         )}
       </div>
     </div>
