@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
-import { API_BASE_URL } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -54,7 +53,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      window.location.href = `${API_BASE_URL}/api/auth/google`;
+      window.location.href = '/api/auth/google';
     } catch (err: any) {
       console.error('Google auth error:', err);
       setError(err.message || 'Google sign in failed');
