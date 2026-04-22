@@ -32,35 +32,35 @@ export default function EmailList({ emails, category, searchQuery = '' }: EmailL
 
   if (filteredEmails.length === 0) {
     return (
-      <div className="flex h-full items-start justify-center px-6 py-8">
+      <div className="flex h-full items-start justify-center px-6 py-6">
         <div className="text-center text-slate-400">
-          <p className="text-sm">No {category} emails</p>
+          <p className="text-xs">No {category} emails</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="px-2">
+    <div className="px-1">
       {filteredEmails.map((email) => (
         <div
           key={email.id}
-          className="border-b border-slate-100 px-4 py-4 transition hover:bg-slate-50/70"
+          className="border-b border-slate-100 px-4 py-3.5 transition hover:bg-slate-50/70"
         >
           <div className="flex items-center gap-4">
-            <div className="min-w-[220px]">
-              <p className="text-[16px] font-medium text-slate-900">To: {email.recipient}</p>
+            <div className="min-w-[190px]">
+              <p className="text-[14px] font-medium text-slate-900">To: {email.recipient}</p>
             </div>
 
             {category === 'scheduled' ? (
-              <div className="mr-1 inline-flex items-center gap-2 rounded-full border border-orange-300 bg-orange-100 px-3.5 py-1.5 text-[13px] text-orange-700">
-                <Clock3 className="h-3.5 w-3.5" />
+              <div className="mr-1 inline-flex items-center gap-2 rounded-full border border-orange-300 bg-orange-100 px-3 py-1.5 text-[12px] text-orange-700">
+                <Clock3 className="h-3 w-3" />
                 {email.scheduledTime}
               </div>
             ) : null}
 
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] text-slate-800">
+              <p className="truncate text-[14px] text-slate-800">
                 <span className="font-medium">{email.subject}</span>
                 {email.preview ? <span className="text-slate-400"> - {email.preview}</span> : null}
               </p>
