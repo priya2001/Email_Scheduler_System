@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
+import { API_BASE_URL } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -99,6 +100,23 @@ export default function LoginPage() {
             {loading ? (isSignUp ? 'Creating...' : 'Logging in...') : isSignUp ? 'Create Account' : 'Login'}
           </button>
         </form>
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-gray-200" />
+          <span className="text-xs uppercase tracking-[0.2em] text-gray-400">or</span>
+          <div className="h-px flex-1 bg-gray-200" />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = `${API_BASE_URL}/api/auth/google`;
+          }}
+          disabled={loading}
+          className="w-full border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Continue with Google
+        </button>
 
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">

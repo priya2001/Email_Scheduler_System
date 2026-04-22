@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { Session, User } from '@supabase/supabase-js';
+import { environment } from '../config/environment';
 import { logger } from '../utils/logger';
-import { createSupabaseServerClient } from '../lib/supabase';
+import { createSupabaseRouteClient, createSupabaseServerClient } from '../lib/supabase';
 
 const ACCESS_COOKIE = 'email_scheduler_access_token';
 const REFRESH_COOKIE = 'email_scheduler_refresh_token';
@@ -137,6 +138,66 @@ export const authController = {
       });
     } catch (error) {
       logger.error('Login failed', error);
+      return next(error);
+    }
+  },
+
+  async googleStart(req: Request, res: Response, next: NextFunction) {
+    try {
+      const supabase = createSupabaseRouteClient(req, res);
+      const redirectTo = `${environment.backendUrl}/api/auth/google/callback`;
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error || !data.url) {
+        return res.status(400).json({
+          success: false,
+          error: error?.message || 'Unable to start Google sign-in',
+        });
+      }
+
+      return res.redirect(302, data.url);
+    } catch (error) {
+      logger.error('Google sign-in start failed', error);
+      return next(error);
+    }
+  },
+
+  async googleCallback(req: Request, res: Response, next: NextFunction) {
+    try {
+      const code = typeof req.query.code === 'string' ? req.query.code : '';
+
+      if (!code) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing OAuth code',
+        });
+      }
+
+      const supabase = createSupabaseRouteClient(req, res);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+
+      if (error || !data.session || !data.user) {
+        return res.status(400).json({
+          success: false,
+          error: error?.message || 'Google sign-in failed',
+        });
+      }
+
+      setAuthCookies(res, data.session);
+
+      return res.redirect(302, `${environment.frontendUrl}/auth/callback`);
+    } catch (error) {
+      logger.error('Google callback failed', error);
       return next(error);
     }
   },

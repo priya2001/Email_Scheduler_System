@@ -26,6 +26,7 @@
     "@bull-board/api": "^6.21.3",
     "@bull-board/express": "^6.21.3",
     "@prisma/client": "^5.8.0",
+    "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.104.0",
     "bullmq": "^5.75.2",
     "cookie-parser": "^1.4.7",

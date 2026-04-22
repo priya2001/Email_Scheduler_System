@@ -81,6 +81,8 @@ Edit `.env` with your configuration:
 # Server
 NODE_ENV=development
 PORT=3001
+BACKEND_URL=http://localhost:3001
+FRONTEND_URL=http://localhost:3000
 
 # Database - PostgreSQL
 DATABASE_URL="postgresql://postgres:password@localhost:5432/email_scheduler?schema=public"
@@ -112,6 +114,12 @@ npm run dev
 ```
 
 Server will start at `http://localhost:3001`
+
+If you want Google sign-in locally, add this redirect URL in Supabase:
+
+```text
+http://localhost:3001/api/auth/google/callback
+```
 
 ### 5. Start the BullMQ Worker
 
@@ -160,6 +168,19 @@ GET /api/emails/:id
 PUT /api/emails/:id
 DELETE /api/emails/:id
 ```
+
+### Auth API
+
+```bash
+POST /api/auth/signup
+POST /api/auth/login
+GET /api/auth/google
+GET /api/auth/google/callback
+GET /api/auth/session
+POST /api/auth/logout
+```
+
+`GET /api/auth/google` starts the Google OAuth flow from the backend. The callback route exchanges the code, stores the backend auth cookies, and redirects back to the frontend callback page.
 
 `scheduledTime` controls the BullMQ delay, so jobs run when the email is due.
 For bulk sends, `delayBetweenEmails` and `hourlyLimit` control spacing between queued jobs.
