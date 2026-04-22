@@ -167,73 +167,73 @@ export default function ComposeEmail() {
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      <header className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-        <div className="flex items-center gap-4">
+      <header className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
             aria-label="Go back"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100"
             type="button"
           >
-            <ArrowLeft className="h-6 w-6" />
+            <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-[28px] font-normal tracking-[-0.03em] text-slate-900">
+          <h1 className="text-[22px] font-normal tracking-[-0.03em] text-slate-900">
             Compose New Email
           </h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             title="Attach file"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
           >
-            <Paperclip className="h-6 w-6" />
+            <Paperclip className="h-5 w-5" />
           </button>
           <button
             type="button"
             onClick={() => setShowSendLater(!showSendLater)}
             title="Schedule"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
           >
-            <Clock3 className="h-6 w-6" />
+            <Clock3 className="h-5 w-5" />
           </button>
           <button
             type="button"
             onClick={handleSendNow}
             disabled={isSending}
-            className="inline-flex h-12 items-center justify-center rounded-full border border-emerald-500 px-8 text-[18px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex h-10 items-center justify-center rounded-full border border-emerald-500 px-6 text-[15px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Send className="mr-2 h-4.5 w-4.5" />
+            <Send className="mr-2 h-4 w-4" />
             {isSending ? 'Sending...' : 'Send'}
           </button>
         </div>
       </header>
 
-      <div className="relative flex min-h-[calc(100vh-73px)] overflow-hidden bg-white">
-        <div className="min-w-0 flex-1 overflow-y-auto px-6 py-10">
-          <div className="mx-auto w-full max-w-[1280px]">
+      <div className="relative flex min-h-[calc(100vh-61px)] overflow-hidden bg-white">
+        <div className="min-w-0 flex-1 overflow-y-auto px-5 py-6">
+          <div className="mx-auto w-full max-w-[1180px]">
             {error && (
               <div className="mb-6 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {error}
               </div>
             )}
 
-            <div className="space-y-8">
-              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
-                <label className="text-[16px] text-slate-900">From</label>
-                <div className="inline-flex max-w-[320px] items-center justify-between rounded-xl bg-slate-100 px-4 py-3 text-[18px] text-slate-800">
+            <div className="space-y-6">
+              <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
+                <label className="text-[14px] text-slate-900">From</label>
+                <div className="inline-flex max-w-[300px] items-center justify-between rounded-xl bg-slate-100 px-4 py-2.5 text-[15px] text-slate-800">
                   <span className="truncate">oliver.brown@domain.io</span>
-                  <ChevronDown className="ml-3 h-4 w-4 shrink-0 text-slate-400" />
+                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-slate-400" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
-                <label className="text-[16px] text-slate-900">To</label>
+              <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
+                <label className="text-[14px] text-slate-900">To</label>
                 <div className="min-w-0 border-b border-slate-200 pb-2">
                   <div className="flex flex-wrap items-center gap-2">
                     {recipients.map((email) => (
-                      <div key={email} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[14px] text-slate-800">
+                      <div key={email} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[13px] text-slate-800">
                         {email}
                         <button
                           onClick={() => handleRemoveRecipient(email)}
@@ -251,44 +251,44 @@ export default function ComposeEmail() {
                       value={recipientInput}
                       onChange={(e) => setRecipientInput(e.target.value)}
                       onKeyDown={handleAddRecipient}
-                      className="min-w-[220px] flex-1 border-0 bg-transparent text-[18px] text-slate-900 placeholder:text-slate-400 outline-none"
+                      className="min-w-[180px] flex-1 border-0 bg-transparent text-[15px] text-slate-900 placeholder:text-slate-400 outline-none"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
-                <label className="text-[16px] text-slate-900">Subject</label>
+              <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
+                <label className="text-[14px] text-slate-900">Subject</label>
                 <input
                   type="text"
                   placeholder="Subject"
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  className="w-full border-0 border-b border-slate-200 bg-transparent px-0 pb-3 text-[18px] text-slate-900 placeholder:text-slate-400 outline-none"
+                  className="w-full border-0 border-b border-slate-200 bg-transparent px-0 pb-2.5 text-[15px] text-slate-900 placeholder:text-slate-400 outline-none"
                 />
               </div>
 
-              <div className="grid grid-cols-[120px_minmax(0,1fr)] items-center gap-4">
-                <div className="text-[16px] text-slate-900">Delay between 2 emails</div>
-                <div className="flex items-center gap-10">
+              <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
+                <div className="text-[14px] text-slate-900">Delay between 2 emails</div>
+                <div className="flex items-center gap-6">
                   <input
                     type="number"
                     value={delayBetweenEmails}
                     onChange={(e) => setDelayBetweenEmails(e.target.value)}
-                    className="h-12 w-[92px] rounded-xl border border-slate-200 bg-white px-3 text-center text-[16px] text-slate-600 outline-none focus:border-slate-300"
+                    className="h-10 w-[82px] rounded-xl border border-slate-200 bg-white px-3 text-center text-[14px] text-slate-600 outline-none focus:border-slate-300"
                   />
-                  <div className="text-[16px] text-slate-900">Hourly Limit</div>
+                  <div className="text-[14px] text-slate-900">Hourly Limit</div>
                   <input
                     type="number"
                     value={hourlyLimit}
                     onChange={(e) => setHourlyLimit(e.target.value)}
-                    className="h-12 w-[92px] rounded-xl border border-slate-200 bg-white px-3 text-center text-[16px] text-slate-600 outline-none focus:border-slate-300"
+                    className="h-10 w-[82px] rounded-xl border border-slate-200 bg-white px-3 text-center text-[14px] text-slate-600 outline-none focus:border-slate-300"
                   />
                 </div>
               </div>
 
-              <div className="rounded-[18px] bg-slate-50/70 p-3">
-                <div className="min-h-[560px] rounded-[18px] bg-white">
+              <div className="rounded-[16px] bg-slate-50/70 p-2.5">
+                <div className="compose-editor min-h-[460px] rounded-[16px] bg-white">
                   <ReactQuill
                     theme="snow"
                     value={body}
@@ -296,7 +296,7 @@ export default function ComposeEmail() {
                     modules={modules}
                     formats={formats}
                     placeholder="Type Your Reply..."
-                    style={{ height: '100%' }}
+                    style={{ minHeight: '460px' }}
                   />
                 </div>
               </div>
@@ -305,28 +305,28 @@ export default function ComposeEmail() {
         </div>
 
         {showSendLater && (
-          <aside className="absolute right-6 top-6 z-20 w-[470px] rounded-xl border border-slate-200 bg-white shadow-[0_6px_18px_rgba(15,23,42,0.12)]">
+          <aside className="absolute right-6 top-6 z-20 w-[420px] rounded-xl border border-slate-200 bg-white shadow-[0_6px_18px_rgba(15,23,42,0.12)]">
             <div className="p-5">
-              <h2 className="text-[22px] font-medium text-slate-900">Send Later</h2>
+              <h2 className="text-[20px] font-medium text-slate-900">Send Later</h2>
 
-              <div className="mt-8">
+              <div className="mt-7">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                   <input
                     type="datetime-local"
                     value={scheduledTime}
                     onChange={(e) => setScheduledTime(e.target.value)}
-                    className="w-full bg-transparent text-[18px] text-slate-500 outline-none placeholder:text-slate-400"
+                    className="w-full bg-transparent text-[15px] text-slate-500 outline-none placeholder:text-slate-400"
                   />
-                  <CalendarDays className="ml-3 h-5 w-5 shrink-0 text-slate-400" />
+                  <CalendarDays className="ml-3 h-4.5 w-4.5 shrink-0 text-slate-400" />
                 </div>
               </div>
 
-              <div className="mt-6 space-y-4">
+              <div className="mt-6 space-y-3">
                 {presetTimes.map((preset) => (
                   <button
                     key={preset.value}
                     onClick={() => handleSelectTime(preset.value)}
-                    className={`block w-full text-left text-[18px] text-slate-600 transition hover:text-slate-900 ${
+                    className={`block w-full text-left text-[15px] text-slate-600 transition hover:text-slate-900 ${
                       scheduledTime === preset.value ? 'text-slate-900' : ''
                     }`}
                     type="button"
@@ -337,13 +337,13 @@ export default function ComposeEmail() {
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-8 border-t border-slate-200 px-5 py-4">
+            <div className="flex items-center justify-end gap-6 border-t border-slate-200 px-5 py-4">
               <button
                 onClick={() => {
                   setShowSendLater(false);
                   setScheduledTime('');
                 }}
-                className="text-[18px] text-slate-900 transition hover:text-slate-700"
+                className="text-[15px] text-slate-900 transition hover:text-slate-700"
                 type="button"
               >
                 Cancel
@@ -351,7 +351,7 @@ export default function ComposeEmail() {
               <button
                 onClick={handleSendLater}
                 disabled={!scheduledTime || isSending}
-                className="inline-flex h-12 items-center justify-center rounded-full border border-emerald-500 px-8 text-[18px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-10 items-center justify-center rounded-full border border-emerald-500 px-6 text-[15px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
                 type="button"
               >
                 {isSending ? 'Scheduling...' : 'Done'}
