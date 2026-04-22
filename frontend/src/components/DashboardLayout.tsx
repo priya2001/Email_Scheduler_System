@@ -92,28 +92,28 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-white text-slate-900">
-      <aside className="flex w-[280px] shrink-0 flex-col border-r border-slate-200 bg-white px-3 py-4">
+      <aside className="flex w-[252px] shrink-0 flex-col border-r border-slate-200 bg-white px-3 py-3.5">
         <div className="px-2 pb-5">
-          <h1 className="select-none text-[2.75rem] font-black leading-none tracking-[-0.08em] text-slate-900">ONG</h1>
+          <h1 className="select-none text-[2.2rem] font-black leading-none tracking-[-0.08em] text-slate-900">ONG</h1>
         </div>
 
         <div className="relative px-2">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex w-full items-center gap-3 rounded-3xl bg-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-200/60"
+            className="flex w-full items-center gap-2.5 rounded-3xl bg-slate-100 px-2.5 py-2 text-left transition hover:bg-slate-200/60"
           >
             {profilePhotoUrl ? (
-              <img src={profilePhotoUrl} alt="Profile" className="h-11 w-11 rounded-full object-cover" />
+              <img src={profilePhotoUrl} alt="Profile" className="h-9 w-9 rounded-full object-cover" />
             ) : (
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-800 text-sm font-semibold text-white">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-800 text-xs font-semibold text-white">
                 {userInitials}
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] leading-tight text-slate-900">{user?.email?.split('@')[0] || 'Oliver Brown'}</p>
-              <p className="truncate text-[12px] leading-tight text-slate-500">{user?.email || 'oliver.brown@domain.io'}</p>
+              <p className="truncate text-[13px] leading-tight text-slate-900">{user?.email?.split('@')[0] || 'Oliver Brown'}</p>
+              <p className="truncate text-[11px] leading-tight text-slate-500">{user?.email || 'oliver.brown@domain.io'}</p>
             </div>
-            <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition ${showUserMenu ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`h-4.5 w-4.5 shrink-0 text-slate-400 transition ${showUserMenu ? 'rotate-180' : ''}`} />
           </button>
 
           {showUserMenu && (
@@ -129,18 +129,18 @@ export default function DashboardLayout({
           )}
         </div>
 
-        <div className="px-2 py-5">
+        <div className="px-2 py-4">
           <button
             onClick={() => router.push('/compose')}
-            className="flex w-full items-center justify-center rounded-full border-2 border-emerald-500 px-4 py-2.5 text-[16px] font-medium text-emerald-600 transition hover:bg-emerald-50"
+            className="flex w-full items-center justify-center rounded-full border-2 border-emerald-500 px-4 py-2 text-[14px] font-medium text-emerald-600 transition hover:bg-emerald-50"
           >
-            <PenLine className="mr-2 h-4.5 w-4.5" />
+            <PenLine className="mr-1.5 h-4 w-4" />
             Compose
           </button>
         </div>
 
         <div className="px-2 pt-2">
-          <p className="mb-4 px-4 text-xs font-medium uppercase tracking-[0.12em] text-slate-400">Core</p>
+          <p className="mb-3 px-4 text-[11px] font-medium uppercase tracking-[0.12em] text-slate-400">Core</p>
           <div className="space-y-1.5">
             {categories.map((category) => {
               const Icon = category.icon;
@@ -150,15 +150,15 @@ export default function DashboardLayout({
                 <button
                   key={category.id}
                   onClick={() => onCategoryChange(category.id)}
-                className={`flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left transition ${
+                  className={`flex w-full items-center justify-between rounded-2xl px-3.5 py-2.5 text-left transition ${
                     active ? 'bg-emerald-100/70 text-slate-900' : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  <span className="flex items-center gap-3">
-                    <Icon className="h-4.5 w-4.5 shrink-0 text-slate-600" />
-                    <span className="text-[15px] leading-none font-medium">{category.label}</span>
+                  <span className="flex items-center gap-2.5">
+                    <Icon className="h-4 w-4 shrink-0 text-slate-600" />
+                    <span className="text-[13px] leading-none font-medium">{category.label}</span>
                   </span>
-                  <span className={`text-[13px] leading-none ${active ? 'text-slate-500' : 'text-slate-500'}`}>{category.count}</span>
+                  <span className={`text-[12px] leading-none ${active ? 'text-slate-500' : 'text-slate-500'}`}>{category.count}</span>
                 </button>
               );
             })}
@@ -167,34 +167,34 @@ export default function DashboardLayout({
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col bg-white">
-        <header className="flex items-center gap-4 border-b border-slate-200 px-5 py-3.5">
+        <header className="flex items-center gap-3 border-b border-slate-200 px-4 py-2.5">
           <div className="relative flex min-w-0 flex-1 items-center">
-            <div className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2">
-              <Search className="h-4 w-4 text-slate-400" />
+            <div className="pointer-events-none absolute left-4.5 top-1/2 -translate-y-1/2">
+              <Search className="h-3.5 w-3.5 text-slate-400" />
             </div>
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="h-11 w-full rounded-full bg-slate-50 pl-14 pr-5 text-[14px] text-slate-700 placeholder:text-slate-400 outline-none ring-0 transition focus:bg-white focus:shadow-[0_0_0_1px_rgba(148,163,184,0.25)]"
+              className="h-10 w-full rounded-full bg-slate-50 pl-12 pr-4 text-[13px] text-slate-700 placeholder:text-slate-400 outline-none ring-0 transition focus:bg-white focus:shadow-[0_0_0_1px_rgba(148,163,184,0.25)]"
             />
           </div>
 
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             aria-label="Filter"
           >
-            <SlidersHorizontal className="h-4.5 w-4.5" />
+            <SlidersHorizontal className="h-4 w-4" />
           </button>
 
           <button
             type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
             aria-label="Refresh"
           >
-            <RotateCcw className="h-4.5 w-4.5" />
+            <RotateCcw className="h-4 w-4" />
           </button>
         </header>
 
