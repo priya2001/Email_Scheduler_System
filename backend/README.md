@@ -350,7 +350,7 @@ docker build -t email-scheduler-backend -f backend/Dockerfile backend
 docker run -p 3001:3001 --env-file backend/.env email-scheduler-backend
 ```
 
-For backend docker, point the service to `backend/` as the Docker build context and set the required environment variables there. The container listens on `PORT` and starts the API server plus BullMQ worker in one process.
+For backend Docker, point the service to `backend/` as the Docker build context and set the required environment variables there. The container listens on `PORT` and starts the API server plus BullMQ worker in one process. The image uses `node:20-bullseye-slim` so Prisma can load the expected OpenSSL 1.1 engine in production containers.
 
 ## 📝 Best Practices Implemented
 
