@@ -268,8 +268,10 @@ export default function ComposeEmail() {
                 />
               </div>
 
-              <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
-                <div className="text-[14px] text-slate-900">Delay between 2 emails</div>
+              <div className="grid grid-cols-[160px_minmax(0,1fr)] items-center gap-3">
+                <div className="whitespace-nowrap text-[14px] text-slate-900">
+                  Delay between 2 emails
+                </div>
                 <div className="flex items-center gap-6">
                   <input
                     type="number"
