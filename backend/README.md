@@ -346,9 +346,11 @@ npm start
 ### Docker Support
 
 ```bash
-docker build -t email-scheduler-backend .
-docker run -p 3001:3001 --env-file .env email-scheduler-backend
+docker build -t email-scheduler-backend -f backend/Dockerfile backend
+docker run -p 3001:3001 --env-file backend/.env email-scheduler-backend
 ```
+
+For backend docker, point the service to `backend/` as the Docker build context and set the required environment variables there. The container listens on `PORT` and starts the API server plus BullMQ worker in one process.
 
 ## 📝 Best Practices Implemented
 
