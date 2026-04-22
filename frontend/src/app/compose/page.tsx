@@ -176,18 +176,12 @@ export default function ComposeEmail() {
     }
   };
 
-  const handleSendNow = async () => {
-    setScheduledTime('');
+  const handleSubmit = async () => {
     await performSend();
+    setShowSendLater(false);
   };
 
-  const handleSendLater = async () => {
-    if (!scheduledTime) {
-      setError('Please select a date and time to send later');
-      return;
-    }
-
-    await performSend();
+  const handlePanelDone = () => {
     setShowSendLater(false);
   };
 
@@ -226,12 +220,12 @@ export default function ComposeEmail() {
           </button>
           <button
             type="button"
-            onClick={handleSendNow}
+            onClick={handleSubmit}
             disabled={isSending || !senderEmail}
             className="inline-flex h-10 items-center justify-center rounded-full border border-emerald-500 px-6 text-[15px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="mr-2 h-4 w-4" />
-            {isSending ? 'Sending...' : 'Send'}
+            {isSending ? 'Sending...' : scheduledTime ? 'Send Later' : 'Send'}
           </button>
         </div>
       </header>
@@ -377,12 +371,12 @@ export default function ComposeEmail() {
                 Cancel
               </button>
               <button
-                onClick={handleSendLater}
-                disabled={!scheduledTime || isSending}
+                onClick={handlePanelDone}
+                disabled={isSending}
                 className="inline-flex h-10 items-center justify-center rounded-full border border-emerald-500 px-6 text-[15px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
                 type="button"
               >
-                {isSending ? 'Scheduling...' : 'Done'}
+                Done
               </button>
             </div>
           </aside>
