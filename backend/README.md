@@ -111,13 +111,11 @@ Server will start at `http://localhost:3001`
 
 ### 5. Start the BullMQ Worker
 
-Run the worker in a separate terminal:
-
 ```bash
-npm run dev:worker
+npm run dev
 ```
 
-Make sure both the API server and worker are running. BullMQ will not process jobs unless the worker process is active.
+The API server and BullMQ worker now run in the same process, so one command starts both.
 
 ### 6. Open Bull Board
 
@@ -132,10 +130,8 @@ http://localhost:3001/admin/queues
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start dev server with hot reload |
-| `npm run dev:worker` | Start the BullMQ worker |
 | `npm run build` | Build TypeScript to JavaScript |
 | `npm start` | Start production server |
-| `npm run start:worker` | Start the production BullMQ worker |
 | `npm run type-check` | Run TypeScript type checking |
 | `npm run prisma:generate` | Generate Prisma client |
 | `npm run prisma:migrate` | Create & run database migrations |

@@ -8,8 +8,11 @@ import { errorHandler, AppError } from './middleware/errorHandler';
 import healthRoutes from './routes/health';
 import emailRoutes from './routes/emails';
 import { serverAdapter as bullBoardAdapter } from './bullmq/bullBoard';
+import { createEmailWorker } from './workers/emailWorker';
+import { emailQueue } from './queues/emailQueue';
 
 const app = express();
+const worker = createEmailWorker();
 
 // ========================
 // Middleware Setup
@@ -108,9 +111,12 @@ const server = app.listen(PORT, async () => {
 
 // Graceful shutdown
 async function gracefulShutdown(signal: string): Promise<void> {
-  logger.info(`${signal} signal received: closing HTTP server`);
+  logger.info(`${signal} signal received: closing app services`);
   server.close(async () => {
     logger.info('HTTP server closed');
+
+    await worker.close();
+    await emailQueue.close();
 
     // Disconnect from database
     await disconnectPrisma();
@@ -126,6 +132,10 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('unhandledRejection', (reason: unknown) => {
   logger.error('Unhandled Rejection at:', reason);
   process.exit(1);
+});
+
+logger.info('BullMQ worker started', {
+  queue: 'email-queue',
 });
 
 export default app;
