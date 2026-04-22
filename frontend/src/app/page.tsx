@@ -8,6 +8,13 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('code');
+
+    if (code) {
+      router.replace(`/auth/callback?code=${encodeURIComponent(code)}`);
+      return;
+    }
+
     const checkSession = async () => {
       const response = await apiFetch('/api/auth/session');
 
