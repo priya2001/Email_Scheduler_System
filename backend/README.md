@@ -158,6 +158,7 @@ DELETE /api/emails/:id
 ```
 
 `scheduledTime` controls the BullMQ delay, so jobs run when the email is due.
+For bulk sends, `delayBetweenEmails` and `hourlyLimit` control spacing between queued jobs.
 
 Response:
 ```json

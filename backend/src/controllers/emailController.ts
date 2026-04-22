@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { EmailStatus, Prisma } from '@prisma/client';
+import { environment } from '../config/environment';
 import { prismaClient } from '../config/database';
 import { logger } from '../utils/logger';
 import { enqueueEmailJobAt } from '../queues/emailQueue';
@@ -60,6 +61,19 @@ async function resolveSender(from: string) {
   });
 }
 
+function parsePositiveInteger(value: unknown, fallback: number): number {
+  const parsed = typeof value === 'string' || typeof value === 'number' ? Number(value) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+}
+
+function computeBulkIntervalMs(delayBetweenEmails?: unknown, hourlyLimit?: unknown): number {
+  const userDelayMs = parsePositiveInteger(delayBetweenEmails, 0) * 1000;
+  const hourlyLimitValue = parsePositiveInteger(hourlyLimit, environment.maxEmailsPerHour);
+  const hourlyDelayMs = hourlyLimitValue > 0 ? Math.ceil(3600000 / hourlyLimitValue) : 0;
+
+  return Math.max(userDelayMs, hourlyDelayMs, environment.minDelayBetweenEmails);
+}
+
 // Create a new email
 export const createEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -107,7 +121,7 @@ export const createEmail = async (req: Request, res: Response, next: NextFunctio
 // Create emails in bulk
 export const createBulkEmails = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { from, recipients, subject, body, scheduledTime } = req.body;
+    const { from, recipients, subject, body, scheduledTime, delayBetweenEmails, hourlyLimit } = req.body;
 
     if (!from || !Array.isArray(recipients) || recipients.length === 0 || !subject) {
       return void res.status(400).json({
@@ -133,19 +147,23 @@ export const createBulkEmails = async (req: Request, res: Response, next: NextFu
 
     const sender = await resolveSender(from);
     const batchId = uuidv4();
-    const scheduledDate = scheduledTime ? new Date(scheduledTime) : new Date();
+    const intervalMs = computeBulkIntervalMs(delayBetweenEmails, hourlyLimit);
 
     const createdEmails = await prismaClient.$transaction(async (tx) => {
       const results: EmailWithSender[] = [];
 
-      for (const recipient of normalizedRecipients) {
+      const baseScheduledDate = scheduledTime ? new Date(scheduledTime) : new Date();
+
+      for (const [index, recipient] of normalizedRecipients.entries()) {
+        const emailScheduledTime = new Date(baseScheduledDate.getTime() + index * intervalMs);
+
         const email = await tx.email.create({
           data: {
             senderId: sender.id,
             toEmail: recipient,
             subject,
             body: body || '',
-            scheduledTime: scheduledDate,
+            scheduledTime: emailScheduledTime,
             status: 'PENDING',
             batchId,
           },
@@ -164,13 +182,17 @@ export const createBulkEmails = async (req: Request, res: Response, next: NextFu
       batchId,
       totalRequested: recipients.length,
       totalCreated: createdEmails.length,
+      intervalMs,
     });
 
-    await Promise.all(createdEmails.map((email) => enqueueEmailJobAt(email.id, scheduledDate)));
+    await Promise.all(
+      createdEmails.map((email) => enqueueEmailJobAt(email.id, email.scheduledTime))
+    );
 
     logger.info('Bulk email batch queued for delivery', {
       batchId,
       totalQueued: createdEmails.length,
+      intervalMs,
     });
 
     return void res.status(201).json({

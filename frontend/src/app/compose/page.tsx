@@ -81,6 +81,8 @@ export default function ComposeEmail() {
           subject,
           body,
           scheduledTime: scheduledTime || new Date().toISOString(),
+          delayBetweenEmails,
+          hourlyLimit,
         }),
       });
 
@@ -179,11 +181,11 @@ export default function ComposeEmail() {
             {/* Delay and Hourly Limit */}
             <div className="flex items-center gap-8 pt-2">
               <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-700">Delay between 2 emails</label>
+                <label className="text-sm font-medium text-gray-700">Delay between emails (sec)</label>
                 <input type="number" value={delayBetweenEmails} onChange={(e) => setDelayBetweenEmails(e.target.value)} className="w-16 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm" />
               </div>
               <div className="flex items-center gap-4">
-                <label className="text-sm font-medium text-gray-700">Hourly Limit</label>
+                <label className="text-sm font-medium text-gray-700">Hourly limit</label>
                 <input type="number" value={hourlyLimit} onChange={(e) => setHourlyLimit(e.target.value)} className="w-16 px-3 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-center text-sm" />
               </div>
             </div>
