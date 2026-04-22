@@ -5,6 +5,8 @@ export function createRedisConnection(connectionName: string): IORedis {
   return new IORedis({
     host: environment.redis.host,
     port: environment.redis.port,
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
     connectionName,
   });
 }

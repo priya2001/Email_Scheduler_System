@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import htmlToText from 'html-to-text';
+import { htmlToText } from 'html-to-text';
 import { environment } from '../config/environment';
 import { logger } from '../utils/logger';
 
@@ -21,7 +21,7 @@ export async function sendEmail(to: string, subject: string, html: string) {
     ...mailOptions,
     to,
     subject,
-    text: htmlToText.convert(html),
+    text: htmlToText(html),
     html,
   });
 
