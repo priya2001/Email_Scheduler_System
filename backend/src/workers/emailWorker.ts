@@ -4,11 +4,11 @@ import { environment } from '../config/environment';
 import { sendEmail } from '../lib/mailer';
 import { EMAIL_QUEUE_NAME } from '../queues/emailQueue';
 import { logger } from '../utils/logger';
+import { emailService } from '../services/emailService';
+import { Email } from '@prisma/client';
 
 export interface EmailJobData {
-  to: string;
-  subject: string;
-  body: string;
+  emailId: string;
 }
 
 export function createEmailWorker(): Worker<EmailJobData> {
@@ -17,17 +17,44 @@ export function createEmailWorker(): Worker<EmailJobData> {
   const worker = new Worker<EmailJobData>(
     EMAIL_QUEUE_NAME,
     async (job: Job<EmailJobData>) => {
-      const { to, subject, body } = job.data;
+      const { emailId } = job.data;
 
-      logger.info('Processing email job', {
-        jobId: job.id,
-        to,
-        subject,
-      });
+      logger.info('Processing email job', { jobId: job.id, emailId });
 
-      await sendEmail(to, subject, body);
+      try {
+        const email: Email | null = await emailService.getEmailById(emailId);
 
-      return { success: true };
+        if (!email) {
+          throw new Error(`Email not found: ${emailId}`);
+        }
+
+        if (email.status !== 'PENDING') {
+          logger.info('Skipping email job because it is no longer pending', {
+            emailId,
+            status: email.status,
+          });
+
+          return { skipped: true };
+        }
+
+        await sendEmail(email.toEmail, email.subject, email.body);
+        await emailService.markAsSent(email.id);
+
+        return { success: true };
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown email delivery error';
+
+        try {
+          await emailService.markAsFailed(emailId, errorMessage);
+        } catch (markError) {
+          logger.error('Failed to mark email as failed', {
+            emailId,
+            error: markError instanceof Error ? markError.message : markError,
+          });
+        }
+
+        throw error;
+      }
     },
     {
       connection,
