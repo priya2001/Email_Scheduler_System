@@ -65,34 +65,7 @@ export default function Dashboard() {
       setEmails(data.data || []);
     } catch (error: any) {
       console.error('Error fetching emails:', error);
-      // Show mock data on error for testing
-      const mockEmails: Email[] = [
-        {
-          id: '1',
-          recipient: 'Sarah Wilson',
-          subject: 'Re: Project Update',
-          preview: 'Thanks for the update, Sarah. Looks good!',
-          scheduledTime: 'Tue 9:15:12 AM',
-          status: 'sent',
-        },
-        {
-          id: '2',
-          recipient: 'Support',
-          subject: 'Issue with login',
-          preview: 'I am having trouble logging in to the dashboard...',
-          scheduledTime: 'Thu 8:15:12 PM',
-          status: 'sent',
-        },
-        {
-          id: '3',
-          recipient: 'Sarah Johnson',
-          subject: 'Project Update - Q2',
-          preview: 'Here are the Q2 updates...',
-          scheduledTime: 'Wed 2:30:00 PM',
-          status: 'scheduled',
-        },
-      ];
-      setEmails(mockEmails);
+      setEmails([]);
     }
   };
 
@@ -116,7 +89,18 @@ export default function Dashboard() {
       searchQuery={searchQuery}
       onSearchChange={setSearchQuery}
     >
-      <EmailList emails={emails} category={selectedCategory} searchQuery={searchQuery} />
+      {emails.length === 0 ? (
+        <div className="flex min-h-[280px] items-center justify-center px-6 py-10 text-center">
+          <div className="max-w-sm">
+            <h3 className="text-lg font-medium text-slate-900">No emails yet</h3>
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              When you schedule or send emails, they will appear here.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <EmailList emails={emails} category={selectedCategory} searchQuery={searchQuery} />
+      )}
     </DashboardLayout>
   );
 }
