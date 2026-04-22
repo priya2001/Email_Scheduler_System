@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { createSupabaseRouteClient } from './supabase';
+import { createSupabaseAdminClient, createSupabaseRouteClient } from './supabase';
 import { environment } from '../config/environment';
 
 export interface IncomingAttachmentDraft {
@@ -32,6 +32,44 @@ function buildStoragePath(filename: string) {
   return `attachments/${Date.now()}-${uuidv4()}-${sanitizeFileName(filename)}`;
 }
 
+let ensureBucketPromise: Promise<void> | null = null;
+
+async function ensureAttachmentBucketExists(): Promise<void> {
+  const storageBucket = environment.supabase.storageBucket || 'email-attachments';
+
+  if (!environment.supabase.serviceRoleKey) {
+    return;
+  }
+
+  if (!ensureBucketPromise) {
+    ensureBucketPromise = (async () => {
+      const supabaseAdmin = createSupabaseAdminClient();
+      const { data: buckets, error: listError } = await supabaseAdmin.storage.listBuckets();
+
+      if (listError) {
+        throw new Error(`Failed to inspect Supabase buckets: ${listError.message}`);
+      }
+
+      const bucketExists = buckets?.some((bucket) => bucket.name === storageBucket);
+
+      if (!bucketExists) {
+        const { error: createError } = await supabaseAdmin.storage.createBucket(storageBucket, {
+          public: true,
+        });
+
+        if (createError) {
+          throw new Error(`Failed to create Supabase bucket "${storageBucket}": ${createError.message}`);
+        }
+      }
+    })().catch((error) => {
+      ensureBucketPromise = null;
+      throw error;
+    });
+  }
+
+  await ensureBucketPromise;
+}
+
 export async function uploadAttachmentsToStorage(
   req: Request,
   res: Response,
@@ -43,6 +81,15 @@ export async function uploadAttachmentsToStorage(
 
   const supabase = createSupabaseRouteClient(req, res);
   const storageBucket = environment.supabase.storageBucket || 'email-attachments';
+
+  try {
+    await ensureAttachmentBucketExists();
+  } catch (error) {
+    throw new Error(
+      `Unable to prepare attachment bucket "${storageBucket}". ` +
+        'Create it in Supabase Storage or set SUPABASE_SERVICE_ROLE_KEY so the backend can bootstrap it.',
+    );
+  }
 
   const uploads = await Promise.all(
     attachments.map(async (attachment) => {

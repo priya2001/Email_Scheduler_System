@@ -319,6 +319,17 @@ export const getEmails = async (req: Request, res: Response, next: NextFunction)
 
     const where: Prisma.EmailWhereInput = prismaStatus ? { status: prismaStatus } : {};
 
+    console.log({
+      where,
+      include: {
+        sender: true,
+        attachments: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
     const emails = await prismaClient.email.findMany({
       where,
       include: {

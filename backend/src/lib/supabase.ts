@@ -17,6 +17,20 @@ export function createSupabaseServerClient() {
   });
 }
 
+export function createSupabaseAdminClient() {
+  if (!environment.supabase.url || !environment.supabase.serviceRoleKey) {
+    throw new Error('Supabase service role environment variables are not configured');
+  }
+
+  return createClient(environment.supabase.url, environment.supabase.serviceRoleKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
+}
+
 export function createSupabaseRouteClient(req: Request, res: Response) {
   if (!environment.supabase.url || !environment.supabase.anonKey) {
     throw new Error('Supabase auth environment variables are not configured');
