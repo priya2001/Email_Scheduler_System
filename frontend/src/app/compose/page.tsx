@@ -72,25 +72,26 @@ export default function ComposeEmail() {
     }
     setIsSending(true);
     try {
-      const sendPromises = recipients.map((recipient) =>
-        fetch('http://localhost:3001/api/emails', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from: 'oliver.brown@domain.io',
-            to: recipient,
-            subject,
-            body,
-            scheduledTime: scheduledTime || new Date().toISOString(),
-            delayBetweenEmails,
-            hourlyLimit,
-          }),
-        })
-      );
-      const responses = await Promise.all(sendPromises);
-      const allOk = responses.every((res) => res.ok);
-      if (!allOk) throw new Error('Failed to schedule some emails');
-      alert(`${recipients.length} email(s) scheduled successfully!`);
+      const response = await fetch('http://localhost:3001/api/emails/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'oliver.brown@domain.io',
+          recipients,
+          subject,
+          body,
+          scheduledTime: scheduledTime || new Date().toISOString(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || data?.message || 'Failed to schedule emails');
+      }
+
+      const createdCount = data?.data?.createdCount ?? recipients.length;
+      alert(`${createdCount} email(s) scheduled successfully!`);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to schedule email');
