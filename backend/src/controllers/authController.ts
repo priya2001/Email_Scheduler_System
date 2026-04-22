@@ -145,7 +145,7 @@ export const authController = {
   async googleStart(req: Request, res: Response, next: NextFunction) {
     try {
       const supabase = createSupabaseRouteClient(req, res);
-      const redirectTo = `${environment.backendUrl}/api/auth/google/callback`;
+      const redirectTo = `${environment.frontendUrl}/api/auth/google/callback`;
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
