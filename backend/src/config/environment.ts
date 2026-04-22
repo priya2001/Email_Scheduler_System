@@ -9,6 +9,7 @@ export const environment = {
   // Server
   nodeEnv: (process.env.NODE_ENV || 'development') as 'development' | 'production' | 'test',
   port: parseInt(process.env.PORT || '3001', 10),
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 
   // Redis
   redis: {
@@ -34,6 +35,12 @@ export const environment = {
     password: process.env.SMTP_PASSWORD || '',
   },
 
+  // Supabase Auth
+  supabase: {
+    url: process.env.SUPABASE_URL || '',
+    anonKey: process.env.SUPABASE_ANON_KEY || '',
+  },
+
   // Logging
   logLevel: (process.env.LOG_LEVEL || 'info') as 'debug' | 'info' | 'warn' | 'error',
 
@@ -44,7 +51,7 @@ export const environment = {
 };
 
 // Validate required environment variables
-const requiredVars = ['DATABASE_URL', 'SMTP_USER', 'SMTP_PASSWORD'];
+const requiredVars = ['DATABASE_URL', 'SMTP_USER', 'SMTP_PASSWORD', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
 const missingVars = requiredVars.filter(v => !process.env[v]);
 
 if (missingVars.length > 0) {

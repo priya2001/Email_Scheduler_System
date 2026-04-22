@@ -2,26 +2,25 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/lib/supabase/provider';
+import { apiFetch } from '@/lib/api';
 
 export default function Home() {
   const router = useRouter();
-  const supabase = useSupabase();
 
   useEffect(() => {
-    // Check if user is already logged in
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
+      const response = await apiFetch('/api/auth/session');
+
+      if (response.ok) {
         router.replace('/dashboard');
-      } else {
-        router.replace('/auth/login');
+        return;
       }
+
+      router.replace('/auth/login');
     };
 
     checkSession();
-  }, [router, supabase.auth]);
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

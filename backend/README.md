@@ -95,6 +95,10 @@ SMTP_PORT=587
 SMTP_USER=your_email@ethereal.email
 SMTP_PASSWORD=your_password
 
+# Supabase Auth
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+
 # Features
 MAX_EMAILS_PER_HOUR=100
 MIN_DELAY_BETWEEN_EMAILS=2000

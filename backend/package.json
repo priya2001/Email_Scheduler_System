@@ -26,7 +26,9 @@
     "@bull-board/api": "^6.21.3",
     "@bull-board/express": "^6.21.3",
     "@prisma/client": "^5.8.0",
+    "@supabase/supabase-js": "^2.104.0",
     "bullmq": "^5.75.2",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
@@ -37,6 +39,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^4.17.21",
     "@types/html-to-text": "^9.0.4",

@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/lib/supabase/provider';
 import DashboardLayout from '@/components/DashboardLayout';
 import EmailList from '@/components/EmailList';
+import { apiFetch } from '@/lib/api';
 
 interface Email {
   id: string;
@@ -22,22 +22,20 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
-  const supabase = useSupabase();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
+        const response = await apiFetch('/api/auth/session');
 
-        if (!session) {
+        if (!response.ok) {
           router.replace('/auth/login');
           return;
         }
 
-        setUser(session.user);
-        
+        const data = await response.json();
+        setUser(data?.data?.user || null);
+
         // Fetch emails from your API
         fetchEmails();
       } catch (error) {
@@ -54,11 +52,8 @@ export default function Dashboard() {
 
   const fetchEmails = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/emails', {
+      const response = await apiFetch('/api/emails', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
       const data = await response.json();

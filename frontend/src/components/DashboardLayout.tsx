@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
 import CryptoJS from 'crypto-js';
+import { apiFetch } from '@/lib/api';
 
 interface Email {
   id: string;
@@ -35,7 +35,6 @@ export default function DashboardLayout({
 }: DashboardLayoutProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [profilePhotoUrl, setProfilePhotoUrl] = useState<string>('');
-  const supabase = useSupabase();
   const router = useRouter();
 
   // Initialize profile photo on mount
@@ -54,7 +53,9 @@ export default function DashboardLayout({
   }, [user?.email]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    await apiFetch('/api/auth/logout', {
+      method: 'POST',
+    });
     router.push('/auth/login');
   };
 

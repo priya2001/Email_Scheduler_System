@@ -1,10 +1,12 @@
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { environment } from './config/environment';
 import { prismaClient, disconnectPrisma } from './config/database';
 import { logger } from './utils/logger';
 import { requestLogger } from './middleware/logger';
 import { errorHandler, AppError } from './middleware/errorHandler';
+import authRoutes from './routes/auth';
 import healthRoutes from './routes/health';
 import emailRoutes from './routes/emails';
 import { serverAdapter as bullBoardAdapter } from './bullmq/bullBoard';
@@ -20,10 +22,12 @@ const worker = createEmailWorker();
 
 // CORS configuration
 app.use(cors({
-  origin: '*',
+  origin: environment.frontendUrl,
   credentials: true,
   optionsSuccessStatus: 200,
 }));
+
+app.use(cookieParser());
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -38,6 +42,9 @@ app.use(requestLogger);
 
 // Health check routes
 app.use('/', healthRoutes);
+
+// Auth routes
+app.use('/api/auth', authRoutes);
 
 // Email routes
 app.use('/api/emails', emailRoutes);

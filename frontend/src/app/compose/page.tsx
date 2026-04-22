@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
+import { apiFetch } from '@/lib/api';
 
 const ReactQuill = dynamic(() => import('react-quill').then(mod => {
   require('react-quill/dist/quill.snow.css');
@@ -109,9 +110,8 @@ export default function ComposeEmail() {
     }
     setIsSending(true);
     try {
-      const response = await fetch('http://localhost:3001/api/emails/bulk', {
+      const response = await apiFetch('/api/emails/bulk', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'oliver.brown@domain.io',
           recipients,

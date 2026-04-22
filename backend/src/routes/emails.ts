@@ -1,4 +1,5 @@
 import express from 'express';
+import { requireAuth } from '../middleware/auth';
 import {
   createEmail,
   createBulkEmails,
@@ -11,6 +12,7 @@ import {
 const router = express.Router();
 
 // Email routes
+router.use(requireAuth);
 router.post('/', createEmail);           // Create email
 router.post('/bulk', createBulkEmails);   // Create emails in bulk
 router.get('/', getEmails);              // Get all emails

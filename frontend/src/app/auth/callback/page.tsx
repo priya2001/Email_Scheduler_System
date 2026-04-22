@@ -1,63 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSupabase } from '@/lib/supabase/provider';
+import { apiFetch } from '@/lib/api';
 
 export default function AuthCallback() {
   const router = useRouter();
-  const [error, setError] = useState('');
-  const supabase = useSupabase();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        // The URL fragment is automatically handled by Supabase
-        // This component just waits for the auth state to be set
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+    const checkSession = async () => {
+      const response = await apiFetch('/api/auth/session');
 
-        if (sessionError) {
-          console.error('Session error:', sessionError);
-          setError(sessionError.message);
-          setTimeout(() => {
-            router.replace('/auth/login');
-          }, 3000);
-          return;
-        }
-
-        if (session) {
-          console.log('Session established, redirecting to dashboard');
-          router.replace('/dashboard');
-        } else {
-          console.log('No session, redirecting to login');
-          router.replace('/auth/login');
-        }
-      } catch (err: any) {
-        console.error('Callback error:', err);
-        setError(err.message || 'Authentication error');
-        setTimeout(() => {
-          router.replace('/auth/login');
-        }, 3000);
+      if (response.ok) {
+        router.replace('/dashboard');
+        return;
       }
+
+      router.replace('/auth/login');
     };
 
-    handleCallback();
-  }, [router, supabase.auth]);
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-lg font-semibold text-red-600 mb-2">Authentication Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <p className="text-sm text-gray-500">Redirecting to login...</p>
-        </div>
-      </div>
-    );
-  }
+    checkSession();
+  }, [router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

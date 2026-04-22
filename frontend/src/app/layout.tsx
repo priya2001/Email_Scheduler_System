@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { SupabaseProvider } from '@/lib/supabase/provider';
 
 export const metadata: Metadata = {
   title: 'Email Scheduler System',
@@ -15,9 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <SupabaseProvider>
-          {children}
-        </SupabaseProvider>
+        {children}
       </body>
     </html>
   );
