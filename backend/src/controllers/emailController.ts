@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { EmailStatus, Prisma } from '@prisma/client';
 import { prismaClient } from '../config/database';
 import { logger } from '../utils/logger';
-import { enqueueEmailJob } from '../queues/emailQueue';
+import { enqueueEmailJobAt } from '../queues/emailQueue';
 
 type ApiEmailStatus = 'scheduled' | 'sent' | 'draft';
 type EmailWithSender = Prisma.EmailGetPayload<{
@@ -90,7 +90,7 @@ export const createEmail = async (req: Request, res: Response, next: NextFunctio
 
     logger.info(`Email created: ${email.id}`);
 
-    await enqueueEmailJob(email.id);
+    await enqueueEmailJobAt(email.id, email.scheduledTime);
 
     logger.info(`Email queued for delivery: ${email.id}`);
 
@@ -166,7 +166,7 @@ export const createBulkEmails = async (req: Request, res: Response, next: NextFu
       totalCreated: createdEmails.length,
     });
 
-    await Promise.all(createdEmails.map((email) => enqueueEmailJob(email.id)));
+    await Promise.all(createdEmails.map((email) => enqueueEmailJobAt(email.id, scheduledDate)));
 
     logger.info('Bulk email batch queued for delivery', {
       batchId,

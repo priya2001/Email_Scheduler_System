@@ -27,3 +27,17 @@ export async function enqueueEmailJob(emailId: string) {
     }
   );
 }
+
+export async function enqueueEmailJobAt(emailId: string, scheduledTime?: string | Date | null) {
+  const scheduledDate = scheduledTime ? new Date(scheduledTime) : new Date();
+  const delay = Math.max(scheduledDate.getTime() - Date.now(), 0);
+
+  return emailQueue.add(
+    'send-email',
+    { emailId },
+    {
+      jobId: emailId,
+      delay,
+    }
+  );
+}

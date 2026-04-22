@@ -157,6 +157,8 @@ PUT /api/emails/:id
 DELETE /api/emails/:id
 ```
 
+`scheduledTime` controls the BullMQ delay, so jobs run when the email is due.
+
 Response:
 ```json
 {
