@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
@@ -64,6 +64,7 @@ const formats = [
 
 export default function ComposeEmail() {
   const router = useRouter();
+  const [senderEmail, setSenderEmail] = useState('');
   const [recipients, setRecipients] = useState<string[]>([]);
   const [recipientInput, setRecipientInput] = useState('');
   const [subject, setSubject] = useState('');
@@ -86,6 +87,27 @@ export default function ComposeEmail() {
       { label: 'Tomorrow, 11:00 AM', value: new Date(new Date(tomorrow).setHours(11, 0, 0, 0)).toISOString() },
       { label: 'Tomorrow, 3:00 PM', value: new Date(new Date(tomorrow).setHours(15, 0, 0, 0)).toISOString() },
     ];
+  }, []);
+
+  useEffect(() => {
+    const loadSession = async () => {
+      try {
+        const response = await apiFetch('/api/auth/session');
+
+        if (!response.ok) return;
+
+        const data = await response.json();
+        const email = data?.data?.user?.email;
+
+        if (email) {
+          setSenderEmail(email);
+        }
+      } catch (error) {
+        console.error('Failed to load session for compose sender', error);
+      }
+    };
+
+    loadSession();
   }, []);
 
   const handleAddRecipient = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -117,13 +139,17 @@ export default function ComposeEmail() {
       setError('Please enter subject');
       return;
     }
+    if (!senderEmail) {
+      setError('Unable to load sender email.');
+      return;
+    }
 
     setIsSending(true);
     try {
       const response = await apiFetch('/api/emails/bulk', {
         method: 'POST',
         body: JSON.stringify({
-          from: 'oliver.brown@domain.io',
+          from: senderEmail,
           recipients,
           subject,
           body,
@@ -201,7 +227,7 @@ export default function ComposeEmail() {
           <button
             type="button"
             onClick={handleSendNow}
-            disabled={isSending}
+            disabled={isSending || !senderEmail}
             className="inline-flex h-10 items-center justify-center rounded-full border border-emerald-500 px-6 text-[15px] font-medium text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="mr-2 h-4 w-4" />
@@ -223,7 +249,7 @@ export default function ComposeEmail() {
               <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
                 <label className="text-[14px] text-slate-900">From</label>
                 <div className="inline-flex max-w-[300px] items-center justify-between rounded-xl bg-slate-100 px-4 py-2.5 text-[15px] text-slate-800">
-                  <span className="truncate">oliver.brown@domain.io</span>
+                  <span className="truncate">{senderEmail || 'Loading...'}</span>
                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 text-slate-400" />
                 </div>
               </div>
