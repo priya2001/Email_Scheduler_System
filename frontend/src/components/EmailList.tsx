@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock3, Star } from 'lucide-react';
+import { Clock3, FileText, Send, Star } from 'lucide-react';
 
 interface Email {
   id: string;
@@ -16,6 +16,24 @@ interface EmailListProps {
   category: 'scheduled' | 'sent' | 'draft';
   searchQuery?: string;
 }
+
+const statusConfig = {
+  scheduled: {
+    icon: Clock3,
+    label: (scheduledTime: string) => scheduledTime,
+    tone: 'border-orange-300 bg-orange-100 text-orange-700',
+  },
+  sent: {
+    icon: Send,
+    label: () => 'Sent',
+    tone: 'border-slate-200 bg-slate-100 text-slate-700',
+  },
+  draft: {
+    icon: FileText,
+    label: () => 'Draft',
+    tone: 'border-slate-200 bg-slate-100 text-slate-700',
+  },
+} as const;
 
 export default function EmailList({ emails, category, searchQuery = '' }: EmailListProps) {
   let filteredEmails = emails.filter((email) => email.status === category);
@@ -52,12 +70,15 @@ export default function EmailList({ emails, category, searchQuery = '' }: EmailL
               <p className="text-[14px] font-medium text-slate-900">To: {email.recipient}</p>
             </div>
 
-            {category === 'scheduled' ? (
-              <div className="mr-1 inline-flex items-center gap-2 rounded-full border border-orange-300 bg-orange-100 px-3 py-1.5 text-[12px] text-orange-700">
-                <Clock3 className="h-3 w-3" />
-                {email.scheduledTime}
-              </div>
-            ) : null}
+            <div
+              className={`mr-1 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] ${statusConfig[category].tone}`}
+            >
+              {(() => {
+                const StatusIcon = statusConfig[category].icon;
+                return <StatusIcon className="h-3 w-3" />;
+              })()}
+              {statusConfig[category].label(email.scheduledTime)}
+            </div>
 
             <div className="min-w-0 flex-1">
               <p className="truncate text-[14px] text-slate-800">
