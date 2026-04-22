@@ -1,5 +1,7 @@
 'use client';
 
+import { Clock3, Star } from 'lucide-react';
+
 interface Email {
   id: string;
   recipient: string;
@@ -17,62 +19,60 @@ interface EmailListProps {
 
 export default function EmailList({ emails, category, searchQuery = '' }: EmailListProps) {
   let filteredEmails = emails.filter((email) => email.status === category);
-  
-  // Apply search filter
+
   if (searchQuery.trim()) {
     const query = searchQuery.toLowerCase();
-    filteredEmails = filteredEmails.filter((email) =>
-      email.recipient.toLowerCase().includes(query) ||
-      email.subject.toLowerCase().includes(query) ||
-      email.preview?.toLowerCase().includes(query)
+    filteredEmails = filteredEmails.filter(
+      (email) =>
+        email.recipient.toLowerCase().includes(query) ||
+        email.subject.toLowerCase().includes(query) ||
+        email.preview?.toLowerCase().includes(query),
     );
   }
 
   if (filteredEmails.length === 0) {
     return (
-      <div className="p-8 flex items-center justify-center h-full">
-        <div className="text-center text-gray-500">
-          <p className="text-lg mb-2">No {category} emails</p>
-          <p className="text-sm">Start composing to create new emails</p>
+      <div className="flex h-full items-start justify-center px-6 py-10">
+        <div className="text-center text-slate-400">
+          <p className="text-lg">No {category} emails</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="divide-y divide-gray-200">
+    <div className="px-4">
       {filteredEmails.map((email) => (
         <div
           key={email.id}
-          className="bg-white px-8 py-4 hover:bg-gray-50 cursor-pointer transition border-l-4 border-l-transparent hover:border-l-green-600"
+          className="border-b border-slate-100 px-4 py-5 transition hover:bg-slate-50/70"
         >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-sm flex-shrink-0 mt-1">
-                  {email.recipient.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-700">To: <span className="font-semibold">{email.recipient}</span></p>
-                  <div className="flex items-center gap-2 mt-1 min-w-0">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600 font-medium">
-                      {category === 'sent' && '✓ Sent'}
-                      {category === 'scheduled' && '🕐 Scheduled'}
-                      {category === 'draft' && '✎ Draft'}
-                    </span>
-                    <p className="text-sm font-medium text-gray-900">{email.subject}</p>
-                  </div>
-                  {email.preview && (
-                    <p className="text-sm text-gray-600 mt-1 truncate">{email.preview}</p>
-                  )}
-                </div>
-              </div>
+          <div className="flex items-center gap-4">
+            <div className="min-w-[260px]">
+              <p className="text-[18px] font-medium text-slate-900">To: {email.recipient}</p>
             </div>
-            {category === 'scheduled' && (
-              <div className="flex items-center gap-2 bg-orange-50 px-3 py-1 rounded-full text-sm text-orange-700 font-medium flex-shrink-0">
-                ⏰ {email.scheduledTime}
+
+            {category === 'scheduled' ? (
+              <div className="mr-1 inline-flex items-center gap-2 rounded-full border border-orange-300 bg-orange-100 px-4 py-1.5 text-[15px] text-orange-700">
+                <Clock3 className="h-4 w-4" />
+                {email.scheduledTime}
               </div>
-            )}
+            ) : null}
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[17px] text-slate-800">
+                <span className="font-medium">{email.subject}</span>
+                {email.preview ? <span className="text-slate-400"> - {email.preview}</span> : null}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="ml-4 flex h-8 w-8 items-center justify-center rounded-full text-slate-300 transition hover:bg-slate-100 hover:text-slate-500"
+              aria-label="Star email"
+            >
+              <Star className="h-5 w-5" />
+            </button>
           </div>
         </div>
       ))}
