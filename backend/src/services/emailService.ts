@@ -1,6 +1,10 @@
-import { Email, EmailStatus } from '@prisma/client';
+import { Email, EmailStatus, Prisma } from '@prisma/client';
 import { prismaClient } from '../config/database';
 import { logger } from '../utils/logger';
+
+type EmailWithAttachments = Prisma.EmailGetPayload<{
+  include: { sender: true; attachments: true };
+}>;
 
 export interface CreateEmailInput {
   toEmail: string;
@@ -76,13 +80,13 @@ export class EmailService {
   /**
    * Get email by ID
    */
-  async getEmailById(id: string): Promise<Email | null> {
+  async getEmailById(id: string): Promise<EmailWithAttachments | null> {
     logger.debug('EmailService.getEmailById called', { id });
 
     try {
       const email = await prismaClient.email.findUnique({
         where: { id },
-        include: { sender: true },
+        include: { sender: true, attachments: true },
       });
 
       return email;

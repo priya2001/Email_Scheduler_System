@@ -5,11 +5,23 @@ import { environment } from '../config/environment';
 import { prismaClient } from '../config/database';
 import { logger } from '../utils/logger';
 import { enqueueEmailJobAt } from '../queues/emailQueue';
+import { deleteUploadedAttachments, uploadAttachmentsToStorage, type IncomingAttachmentDraft, type StoredAttachmentMetadata } from '../lib/attachmentStorage';
 
 type ApiEmailStatus = 'scheduled' | 'sent' | 'draft';
 type EmailWithSender = Prisma.EmailGetPayload<{
-  include: { sender: true };
+  include: { sender: true; attachments: true };
 }>;
+
+interface AttachmentResponse {
+  id: string;
+  emailId?: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  storageBucket: string;
+  storagePath: string;
+  publicUrl: string;
+}
 
 interface EmailResponse {
   id: string;
@@ -20,6 +32,8 @@ interface EmailResponse {
   status: ApiEmailStatus;
   from: string;
   batchId?: string | null;
+  attachmentCount: number;
+  attachments: AttachmentResponse[];
 }
 
 function formatEmailResponse(email: {
@@ -31,7 +45,10 @@ function formatEmailResponse(email: {
   status: EmailStatus;
   sender: { email: string };
   batchId?: string | null;
+  attachments?: AttachmentResponse[];
 }): EmailResponse {
+  const attachments = email.attachments ?? [];
+
   return {
     id: email.id,
     recipient: email.toEmail,
@@ -47,6 +64,8 @@ function formatEmailResponse(email: {
     status: email.status === 'PENDING' ? 'scheduled' : email.status === 'SENT' ? 'sent' : 'draft',
     from: email.sender.email,
     batchId: email.batchId ?? null,
+    attachmentCount: attachments.length,
+    attachments,
   };
 }
 
@@ -59,6 +78,48 @@ async function resolveSender(from: string) {
       name: from.split('@')[0],
     },
   });
+}
+
+function normalizeAttachmentDrafts(value: unknown): IncomingAttachmentDraft[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+
+      const candidate = item as Partial<IncomingAttachmentDraft>;
+      const filename = typeof candidate.filename === 'string' ? candidate.filename.trim() : '';
+      const mimeType = typeof candidate.mimeType === 'string' ? candidate.mimeType.trim() : '';
+      const contentBase64 = typeof candidate.contentBase64 === 'string' ? candidate.contentBase64.trim() : '';
+      const size = typeof candidate.size === 'number' ? candidate.size : Number(candidate.size);
+
+      if (!filename || !mimeType || !contentBase64 || !Number.isFinite(size) || size <= 0) {
+        return null;
+      }
+
+      return {
+        filename,
+        mimeType,
+        contentBase64,
+        size: Math.floor(size),
+      };
+    })
+    .filter((item): item is IncomingAttachmentDraft => Boolean(item));
+}
+
+function buildAttachmentCreateData(attachments: StoredAttachmentMetadata[]) {
+  return attachments.map((attachment) => ({
+    filename: attachment.filename,
+    mimeType: attachment.mimeType,
+    size: attachment.size,
+    storageBucket: attachment.storageBucket,
+    storagePath: attachment.storagePath,
+    publicUrl: attachment.publicUrl,
+  }));
 }
 
 function parsePositiveInteger(value: unknown, fallback: number): number {
@@ -78,6 +139,7 @@ function computeBulkIntervalMs(delayBetweenEmails?: unknown, hourlyLimit?: unkno
 export const createEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { from, to, subject, body, scheduledTime } = req.body;
+    const attachmentDrafts = normalizeAttachmentDrafts(req.body.attachments);
 
     if (!from || !to || !subject) {
       return void res.status(400).json({
@@ -87,31 +149,47 @@ export const createEmail = async (req: Request, res: Response, next: NextFunctio
     }
 
     const sender = await resolveSender(from);
+    const uploadedAttachments = attachmentDrafts.length > 0
+      ? await uploadAttachmentsToStorage(req, res, attachmentDrafts)
+      : [];
 
-    const email = await prismaClient.email.create({
-      data: {
-        senderId: sender.id,
-        toEmail: to,
-        subject,
-        body: body || '',
-        scheduledTime: scheduledTime ? new Date(scheduledTime) : new Date(),
-        status: 'PENDING',
-      },
-      include: {
-        sender: true,
-      },
-    });
+    try {
+      const email = await prismaClient.email.create({
+        data: {
+          senderId: sender.id,
+          toEmail: to,
+          subject,
+          body: body || '',
+          scheduledTime: scheduledTime ? new Date(scheduledTime) : new Date(),
+          status: 'PENDING',
+          ...(uploadedAttachments.length > 0 && {
+            attachments: {
+              create: buildAttachmentCreateData(uploadedAttachments),
+            },
+          }),
+        },
+        include: {
+          sender: true,
+          attachments: true,
+        },
+      });
 
-    logger.info(`Email created: ${email.id}`);
+      logger.info(`Email created: ${email.id}`);
 
-    await enqueueEmailJobAt(email.id, email.scheduledTime);
+      await enqueueEmailJobAt(email.id, email.scheduledTime);
 
-    logger.info(`Email queued for delivery: ${email.id}`);
+      logger.info(`Email queued for delivery: ${email.id}`);
 
-    return void res.status(201).json({
-      success: true,
-      data: formatEmailResponse(email),
-    });
+      return void res.status(201).json({
+        success: true,
+        data: formatEmailResponse(email),
+      });
+    } catch (createError) {
+      if (uploadedAttachments.length > 0) {
+        await deleteUploadedAttachments(req, res, uploadedAttachments);
+      }
+      throw createError;
+    }
   } catch (error: any) {
     logger.error('Error creating email:', error);
     return next(error);
@@ -122,6 +200,7 @@ export const createEmail = async (req: Request, res: Response, next: NextFunctio
 export const createBulkEmails = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { from, recipients, subject, body, scheduledTime, delayBetweenEmails, hourlyLimit } = req.body;
+    const attachmentDrafts = normalizeAttachmentDrafts(req.body.attachments);
 
     if (!from || !Array.isArray(recipients) || recipients.length === 0 || !subject) {
       return void res.status(400).json({
@@ -148,62 +227,78 @@ export const createBulkEmails = async (req: Request, res: Response, next: NextFu
     const sender = await resolveSender(from);
     const batchId = uuidv4();
     const intervalMs = computeBulkIntervalMs(delayBetweenEmails, hourlyLimit);
+    const uploadedAttachments = attachmentDrafts.length > 0
+      ? await uploadAttachmentsToStorage(req, res, attachmentDrafts)
+      : [];
 
-    const createdEmails = await prismaClient.$transaction(async (tx) => {
-      const results: EmailWithSender[] = [];
+    try {
+      const createdEmails = await prismaClient.$transaction(async (tx) => {
+        const results: EmailWithSender[] = [];
 
-      const baseScheduledDate = scheduledTime ? new Date(scheduledTime) : new Date();
+        const baseScheduledDate = scheduledTime ? new Date(scheduledTime) : new Date();
 
-      for (const [index, recipient] of normalizedRecipients.entries()) {
-        const emailScheduledTime = new Date(baseScheduledDate.getTime() + index * intervalMs);
+        for (const [index, recipient] of normalizedRecipients.entries()) {
+          const emailScheduledTime = new Date(baseScheduledDate.getTime() + index * intervalMs);
 
-        const email = await tx.email.create({
-          data: {
-            senderId: sender.id,
-            toEmail: recipient,
-            subject,
-            body: body || '',
-            scheduledTime: emailScheduledTime,
-            status: 'PENDING',
-            batchId,
-          },
-          include: {
-            sender: true,
-          },
-        });
+          const email = await tx.email.create({
+            data: {
+              senderId: sender.id,
+              toEmail: recipient,
+              subject,
+              body: body || '',
+              scheduledTime: emailScheduledTime,
+              status: 'PENDING',
+              batchId,
+              ...(uploadedAttachments.length > 0 && {
+                attachments: {
+                  create: buildAttachmentCreateData(uploadedAttachments),
+                },
+              }),
+            },
+            include: {
+              sender: true,
+              attachments: true,
+            },
+          });
 
-        results.push(email);
-      }
+          results.push(email);
+        }
 
-      return results;
-    });
+        return results;
+      });
 
-    logger.info('Bulk email batch created', {
-      batchId,
-      totalRequested: recipients.length,
-      totalCreated: createdEmails.length,
-      intervalMs,
-    });
-
-    await Promise.all(
-      createdEmails.map((email) => enqueueEmailJobAt(email.id, email.scheduledTime))
-    );
-
-    logger.info('Bulk email batch queued for delivery', {
-      batchId,
-      totalQueued: createdEmails.length,
-      intervalMs,
-    });
-
-    return void res.status(201).json({
-      success: true,
-      data: {
+      logger.info('Bulk email batch created', {
         batchId,
-        totalRecipients: recipients.length,
-        createdCount: createdEmails.length,
-        emails: createdEmails.map(formatEmailResponse),
-      },
-    });
+        totalRequested: recipients.length,
+        totalCreated: createdEmails.length,
+        intervalMs,
+      });
+
+      await Promise.all(
+        createdEmails.map((email) => enqueueEmailJobAt(email.id, email.scheduledTime))
+      );
+
+      logger.info('Bulk email batch queued for delivery', {
+        batchId,
+        totalQueued: createdEmails.length,
+        intervalMs,
+      });
+
+      return void res.status(201).json({
+        success: true,
+        data: {
+          batchId,
+          totalRecipients: recipients.length,
+          createdCount: createdEmails.length,
+          emails: createdEmails.map(formatEmailResponse),
+        },
+      });
+    } catch (createError) {
+      if (uploadedAttachments.length > 0) {
+        await deleteUploadedAttachments(req, res, uploadedAttachments);
+      }
+      throw createError;
+    }
   } catch (error: any) {
     logger.error('Error creating bulk emails:', error);
     return next(error);
@@ -228,6 +323,7 @@ export const getEmails = async (req: Request, res: Response, next: NextFunction)
       where,
       include: {
         sender: true,
+        attachments: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -255,6 +351,7 @@ export const getEmail = async (req: Request, res: Response, next: NextFunction) 
       where: { id },
       include: {
         sender: true,
+        attachments: true,
       },
     });
 
@@ -298,6 +395,7 @@ export const updateEmail = async (req: Request, res: Response, next: NextFunctio
       },
       include: {
         sender: true,
+        attachments: true,
       },
     });
 

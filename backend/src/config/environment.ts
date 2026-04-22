@@ -44,6 +44,7 @@ export const environment = {
   supabase: {
     url: process.env.SUPABASE_URL || '',
     anonKey: process.env.SUPABASE_ANON_KEY || '',
+    storageBucket: process.env.SUPABASE_STORAGE_BUCKET || 'email-attachments',
   },
 
   // Logging

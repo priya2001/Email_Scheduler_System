@@ -16,13 +16,20 @@ const mailOptions = {
   from: environment.smtp.user,
 };
 
-export async function sendEmail(to: string, subject: string, html: string) {
+export interface MailAttachment {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+}
+
+export async function sendEmail(to: string, subject: string, html: string, attachments: MailAttachment[] = []) {
   const info = await transporter.sendMail({
     ...mailOptions,
     to,
     subject,
     text: htmlToText(html),
     html,
+    ...(attachments.length > 0 && { attachments }),
   });
 
   logger.info('Email sent', {

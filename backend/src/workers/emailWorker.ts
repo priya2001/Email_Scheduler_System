@@ -5,10 +5,31 @@ import { sendEmail } from '../lib/mailer';
 import { EMAIL_QUEUE_NAME } from '../queues/emailQueue';
 import { logger } from '../utils/logger';
 import { emailService } from '../services/emailService';
-import { Email } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { MailAttachment } from '../lib/mailer';
 
 export interface EmailJobData {
   emailId: string;
+}
+
+type EmailWithAttachments = Prisma.EmailGetPayload<{
+  include: { sender: true; attachments: true };
+}>;
+
+type AttachmentRecord = {
+  filename: string;
+  mimeType: string;
+  publicUrl: string;
+};
+
+async function downloadAttachment(url: string): Promise<Buffer> {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Failed to download attachment from ${url}`);
+  }
+
+  return Buffer.from(await response.arrayBuffer());
 }
 
 export function createEmailWorker(): Worker<EmailJobData> {
@@ -22,7 +43,7 @@ export function createEmailWorker(): Worker<EmailJobData> {
       logger.info('Processing email job', { jobId: job.id, emailId });
 
       try {
-        const email: Email | null = await emailService.getEmailById(emailId);
+        const email: EmailWithAttachments | null = await emailService.getEmailById(emailId);
 
         if (!email) {
           throw new Error(`Email not found: ${emailId}`);
@@ -37,7 +58,17 @@ export function createEmailWorker(): Worker<EmailJobData> {
           return { skipped: true };
         }
 
-        await sendEmail(email.toEmail, email.subject, email.body);
+        const emailAttachments = (email.attachments ?? []) as AttachmentRecord[];
+
+        const attachments: MailAttachment[] = await Promise.all(
+          emailAttachments.map(async (attachment: AttachmentRecord) => ({
+            filename: attachment.filename,
+            contentType: attachment.mimeType,
+            content: await downloadAttachment(attachment.publicUrl),
+          })),
+        );
+
+        await sendEmail(email.toEmail, email.subject, email.body, attachments);
         await emailService.markAsSent(email.id);
 
         return { success: true };

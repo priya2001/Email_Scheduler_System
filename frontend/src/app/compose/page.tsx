@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import {
@@ -13,6 +13,7 @@ import {
   Upload,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { encodeFilesForUpload } from '@/lib/attachments';
 
 const ReactQuill = dynamic(
   () =>
@@ -65,11 +66,13 @@ const formats = [
 
 export default function ComposeEmail() {
   const router = useRouter();
+  const attachmentInputRef = useRef<HTMLInputElement | null>(null);
   const [senderEmail, setSenderEmail] = useState('');
   const [recipients, setRecipients] = useState<string[]>([]);
   const [recipientInput, setRecipientInput] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [delayBetweenEmails, setDelayBetweenEmails] = useState('2');
   const [hourlyLimit, setHourlyLimit] = useState('100');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -77,6 +80,7 @@ export default function ComposeEmail() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const [uploadLabel, setUploadLabel] = useState('Upload List');
+  const maxAttachmentSize = 10 * 1024 * 1024;
 
   const presetTimes = useMemo(() => {
     const tomorrow = new Date();
@@ -124,6 +128,53 @@ export default function ComposeEmail() {
 
   const handleRemoveRecipient = (email: string) => {
     setRecipients(recipients.filter((r) => r !== email));
+  };
+
+  const handleTriggerAttachmentPicker = () => {
+    attachmentInputRef.current?.click();
+  };
+
+  const handleAttachmentSelection = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+
+    if (!files.length) {
+      return;
+    }
+
+    const oversized = files.find((file) => file.size > maxAttachmentSize);
+    if (oversized) {
+      setError(`"${oversized.name}" is too large. Max size is 10 MB per file.`);
+      e.target.value = '';
+      return;
+    }
+
+    setSelectedFiles((current) => {
+      const existingKeys = new Set(current.map((file) => `${file.name}:${file.size}:${file.lastModified}`));
+      const merged = [...current];
+
+      files.forEach((file) => {
+        const key = `${file.name}:${file.size}:${file.lastModified}`;
+        if (!existingKeys.has(key)) {
+          merged.push(file);
+        }
+      });
+
+      return merged;
+    });
+
+    setError('');
+    e.target.value = '';
+  };
+
+  const handleRemoveAttachment = (fileToRemove: File) => {
+    setSelectedFiles((current) =>
+      current.filter(
+        (file) =>
+          file.name !== fileToRemove.name ||
+          file.size !== fileToRemove.size ||
+          file.lastModified !== fileToRemove.lastModified,
+      ),
+    );
   };
 
   const extractEmailsFromCsv = (text: string) => {
@@ -227,6 +278,8 @@ export default function ComposeEmail() {
 
     setIsSending(true);
     try {
+      const uploadedAttachments = selectedFiles.length > 0 ? await encodeFilesForUpload(selectedFiles) : [];
+
       const response = await apiFetch('/api/emails/bulk', {
         method: 'POST',
         body: JSON.stringify({
@@ -237,6 +290,7 @@ export default function ComposeEmail() {
           scheduledTime: scheduledTime || new Date().toISOString(),
           delayBetweenEmails,
           hourlyLimit,
+          attachments: uploadedAttachments,
         }),
       });
 
@@ -287,10 +341,18 @@ export default function ComposeEmail() {
           <button
             type="button"
             title="Attach file"
+            onClick={handleTriggerAttachmentPicker}
             className="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
           >
             <Paperclip className="h-5 w-5" />
           </button>
+          <input
+            ref={attachmentInputRef}
+            type="file"
+            multiple
+            onChange={handleAttachmentSelection}
+            className="hidden"
+          />
           <button
             type="button"
             onClick={() => setShowSendLater(!showSendLater)}
@@ -387,6 +449,40 @@ export default function ComposeEmail() {
                   onChange={(e) => setSubject(e.target.value)}
                   className="w-full border-0 border-b border-slate-200 bg-transparent px-0 pb-2.5 text-[15px] text-slate-900 placeholder:text-slate-400 outline-none"
                 />
+              </div>
+
+              <div className="grid grid-cols-[92px_minmax(0,1fr)] items-start gap-3">
+                <label className="pt-2 text-[14px] text-slate-900">Files</label>
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={handleTriggerAttachmentPicker}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Attach file
+                  </button>
+                  {selectedFiles.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedFiles.map((file) => (
+                        <div key={`${file.name}:${file.size}:${file.lastModified}`} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-[12px] text-slate-700">
+                          <span className="max-w-[200px] truncate">{file.name}</span>
+                          <span className="text-slate-400">
+                            {`${Math.max(1, Math.round(file.size / 1024))} KB`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveAttachment(file)}
+                            className="flex h-4 w-4 items-center justify-center rounded-full text-slate-400 transition hover:text-slate-700"
+                            aria-label={`Remove ${file.name}`}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-[160px_minmax(0,1fr)] items-center gap-3">
