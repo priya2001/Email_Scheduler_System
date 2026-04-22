@@ -71,7 +71,7 @@ export default function EmailList({ emails, category, searchQuery = '' }: EmailL
             </div>
 
             <div
-              className={`mr-1 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] ${statusConfig[category].tone}`}
+              className={`mr-1 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${statusConfig[category].tone}`}
             >
               {(() => {
                 const StatusIcon = statusConfig[category].icon;
