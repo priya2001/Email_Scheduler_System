@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
-import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -12,28 +11,11 @@ export default function AuthCallback() {
   useEffect(() => {
     const finalizeLogin = async () => {
       try {
-        const supabase = createSupabaseBrowserClient();
-        const code = new URLSearchParams(window.location.search).get('code');
-
-        if (!code) {
-          throw new Error('Missing OAuth code');
-        }
-
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (error || !data.session) {
-          throw new Error(error?.message || 'Could not complete Google login');
-        }
-
-        const response = await apiFetch('/api/auth/bridge-session', {
-          method: 'POST',
-          body: JSON.stringify({ session: data.session }),
-        });
-
+        const response = await apiFetch('/api/auth/session');
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result?.error || 'Could not sync session with backend');
+          throw new Error(result?.error || 'Could not complete Google login');
         }
 
         setMessage('Login complete');

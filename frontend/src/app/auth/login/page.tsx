@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
-import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { API_BASE_URL } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -54,22 +54,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const supabase = createSupabaseBrowserClient();
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo,
-        },
-      });
-
-      if (oauthError) {
-        throw new Error(oauthError.message);
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-      }
+      window.location.href = `${API_BASE_URL}/api/auth/google`;
     } catch (err: any) {
       console.error('Google auth error:', err);
       setError(err.message || 'Google sign in failed');
