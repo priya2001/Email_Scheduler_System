@@ -22,7 +22,7 @@ const worker = createEmailWorker();
 
 // CORS configuration
 app.use(cors({
-  origin: environment.frontendUrl,
+  origin: environment.corsOrigins,
   credentials: true,
   optionsSuccessStatus: 200,
 }));

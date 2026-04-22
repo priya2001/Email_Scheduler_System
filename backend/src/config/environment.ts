@@ -11,6 +11,10 @@ export const environment = {
   port: parseInt(process.env.PORT || '3001', 10),
   backendUrl: process.env.BACKEND_URL || 'http://localhost:3001',
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  corsOrigins: (process.env.CORS_ORIGINS || process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map(origin => origin.trim().replace(/\/$/, ''))
+    .filter(Boolean),
 
   // Redis
   redis: {

@@ -83,6 +83,7 @@ NODE_ENV=development
 PORT=3001
 BACKEND_URL=http://localhost:3001
 FRONTEND_URL=http://localhost:3000
+CORS_ORIGINS=http://localhost:3000
 
 # Database - PostgreSQL
 DATABASE_URL="postgresql://postgres:password@localhost:5432/email_scheduler?schema=public"
@@ -119,6 +120,12 @@ If you want Google sign-in locally, add this redirect URL in Supabase:
 
 ```text
 http://localhost:3001/api/auth/google/callback
+```
+
+On Render, set `CORS_ORIGINS` to your frontend URL, for example:
+
+```text
+https://email-scheduler-system-front-end.onrender.com
 ```
 
 ### 5. Start the BullMQ Worker
