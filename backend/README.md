@@ -6,17 +6,26 @@ Production-grade Node.js + TypeScript backend for the Email Scheduler system.
 
 ```
 src/
+├── bullmq/
+│   └── bullBoard.ts         # Bull Board dashboard setup
 ├── config/
 │   └── environment.ts       # Environment variables & config
+│   └── redis.ts             # Redis connection factory for BullMQ
 ├── controllers/
+│   ├── emailController.ts   # Email CRUD handlers
 │   └── healthController.ts  # Request handlers
 ├── middleware/
 │   ├── errorHandler.ts      # Error handling middleware
 │   └── logger.ts            # Request logging middleware
 ├── routes/
+│   ├── emails.ts            # Email routes
 │   └── health.ts            # Route definitions
 ├── services/
-│   └── exampleService.ts    # Business logic & external APIs
+│   ├── emailService.ts      # Email database operations
+│   ├── exampleService.ts    # Business logic & external APIs
+│   └── senderService.ts     # Sender database operations
+├── workers/
+│   └── emailWorker.ts       # BullMQ worker entrypoint
 ├── utils/
 │   └── logger.ts            # Logger utility
 └── index.ts                 # Main application entry point
@@ -100,13 +109,31 @@ npm run dev
 
 Server will start at `http://localhost:3001`
 
+### 5. Start the BullMQ Worker
+
+Run the worker in a separate terminal:
+
+```bash
+npm run dev:worker
+```
+
+### 6. Open Bull Board
+
+The queue dashboard is available at:
+
+```text
+http://localhost:3001/admin/queues
+```
+
 ## 📦 Available Scripts
 
 | Command | Description |
 |---------|-------------|
 | `npm run dev` | Start dev server with hot reload |
+| `npm run dev:worker` | Start the BullMQ worker |
 | `npm run build` | Build TypeScript to JavaScript |
 | `npm start` | Start production server |
+| `npm run start:worker` | Start the production BullMQ worker |
 | `npm run type-check` | Run TypeScript type checking |
 | `npm run prisma:generate` | Generate Prisma client |
 | `npm run prisma:migrate` | Create & run database migrations |

@@ -1,25 +1,50 @@
-import { Worker } from "bullmq";
-import connection from "../config/redis";
-import { sendEmail } from "../lib/mailer";
+import { Worker, Job } from 'bullmq';
+import { createRedisConnection } from '../config/redis';
+import { environment } from '../config/environment';
+import { sendEmail } from '../lib/mailer';
+import { EMAIL_QUEUE_NAME } from '../queues/emailQueue';
+import { logger } from '../utils/logger';
 
-const emailWorker = new Worker(
-  "email-queue",
-  async (job) => {
-    const { email, subject, body } = job.data;
+export interface EmailJobData {
+  to: string;
+  subject: string;
+  body: string;
+}
 
-    console.log("Sending email to:", email);
+export function createEmailWorker(): Worker<EmailJobData> {
+  const connection = createRedisConnection('email-worker');
 
-    await sendEmail(email, subject, body);
+  const worker = new Worker<EmailJobData>(
+    EMAIL_QUEUE_NAME,
+    async (job: Job<EmailJobData>) => {
+      const { to, subject, body } = job.data;
 
-    return { success: true };
-  },
-  { connection }
-);
+      logger.info('Processing email job', {
+        jobId: job.id,
+        to,
+        subject,
+      });
 
-emailWorker.on("completed", (job) => {
-  console.log(`Job ${job?.id} completed`);
-});
+      await sendEmail(to, subject, body);
 
-emailWorker.on("failed", (job, err) => {
-  console.log(`Job ${job?.id} failed`, err);
-});
+      return { success: true };
+    },
+    {
+      connection,
+      concurrency: environment.workerConcurrency,
+    }
+  );
+
+  worker.on('completed', (job) => {
+    logger.info('Email job completed', { jobId: job?.id });
+  });
+
+  worker.on('failed', (job, err) => {
+    logger.error('Email job failed', {
+      jobId: job?.id,
+      error: err instanceof Error ? err.message : err,
+    });
+  });
+
+  return worker;
+}

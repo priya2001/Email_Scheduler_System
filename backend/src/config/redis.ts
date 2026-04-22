@@ -1,8 +1,10 @@
-import IORedis from "ioredis";
+import IORedis from 'ioredis';
+import { environment } from './environment';
 
-const connection = new IORedis({
-  host: "127.0.0.1",
-  port: 6379,
-});
-
-export default connection;
+export function createRedisConnection(connectionName: string): IORedis {
+  return new IORedis({
+    host: environment.redis.host,
+    port: environment.redis.port,
+    connectionName,
+  });
+}

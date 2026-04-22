@@ -21,11 +21,6 @@ const prismaClient =
     errorFormat: 'pretty',
   });
 
-// Handle Prisma client errors
-prismaClient.$on('error', (event) => {
-  logger.error('Prisma client error:', event);
-});
-
 // Log Prisma client initialization
 if (process.env.NODE_ENV !== 'production') {
   logger.debug('Prisma client initialized in development mode');

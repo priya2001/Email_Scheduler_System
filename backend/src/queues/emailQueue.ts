@@ -1,8 +1,15 @@
-import { Queue } from "bullmq";
-import connection from "../config/redis";
+import { Queue } from 'bullmq';
+import { createRedisConnection } from '../config/redis';
 
-const emailQueue = new Queue("email-queue", {
+export const EMAIL_QUEUE_NAME = 'email-queue';
+
+const connection = createRedisConnection(EMAIL_QUEUE_NAME);
+
+export const emailQueue = new Queue(EMAIL_QUEUE_NAME, {
   connection,
+  defaultJobOptions: {
+    attempts: 3,
+    removeOnComplete: true,
+    removeOnFail: 100,
+  },
 });
-
-export default emailQueue;

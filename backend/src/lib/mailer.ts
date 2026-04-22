@@ -1,8 +1,9 @@
 import nodemailer from 'nodemailer';
 import htmlToText from 'html-to-text';
 import { environment } from '../config/environment';
+import { logger } from '../utils/logger';
 
-let transporter = nodemailer.createTransport({
+const transporter = nodemailer.createTransport({
   host: environment.smtp.host,
   port: environment.smtp.port,
   auth: {
@@ -11,17 +12,24 @@ let transporter = nodemailer.createTransport({
   }
 });
 
-
 const mailOptions = {
   from: environment.smtp.user,
 };
 
-export function sendEmail(to: string, subject: string, html: string) {
-  return transporter.sendMail({ ...mailOptions, to, subject, text: htmlToText.convert(html), html }, (error, info) => {
-    if (error) {
-      return console.log("Error:", error);
-    }
-    console.log("Email sent:", info.response);
-    return info.response;
+export async function sendEmail(to: string, subject: string, html: string) {
+  const info = await transporter.sendMail({
+    ...mailOptions,
+    to,
+    subject,
+    text: htmlToText.convert(html),
+    html,
   });
+
+  logger.info('Email sent', {
+    to,
+    subject,
+    messageId: info.messageId,
+  });
+
+  return info;
 }

@@ -7,6 +7,7 @@ import { requestLogger } from './middleware/logger';
 import { errorHandler, AppError } from './middleware/errorHandler';
 import healthRoutes from './routes/health';
 import emailRoutes from './routes/emails';
+import { serverAdapter as bullBoardAdapter } from './bullmq/bullBoard';
 
 const app = express();
 
@@ -37,6 +38,9 @@ app.use('/', healthRoutes);
 
 // Email routes
 app.use('/api/emails', emailRoutes);
+
+// Bull Board dashboard
+app.use('/admin/queues', bullBoardAdapter.getRouter());
 
 // API routes will be added here
 app.use('/api', (_req: Request, res: Response) => {
