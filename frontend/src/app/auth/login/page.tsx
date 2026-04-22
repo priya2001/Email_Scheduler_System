@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiFetch } from '@/lib/api';
-import { API_BASE_URL } from '@/lib/api';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -45,6 +45,34 @@ export default function LoginPage() {
       console.error('Auth error:', err);
       setError(err.message || (isSignUp ? 'Sign up failed' : 'Login failed'));
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+        },
+      });
+
+      if (oauthError) {
+        throw new Error(oauthError.message);
+      }
+
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      console.error('Google auth error:', err);
+      setError(err.message || 'Google sign in failed');
       setLoading(false);
     }
   };
@@ -109,9 +137,7 @@ export default function LoginPage() {
 
         <button
           type="button"
-          onClick={() => {
-            window.location.href = `${API_BASE_URL}/api/auth/google`;
-          }}
+          onClick={handleGoogleLogin}
           disabled={loading}
           className="w-full border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
         >

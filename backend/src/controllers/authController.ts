@@ -202,6 +202,52 @@ export const authController = {
     }
   },
 
+  async bridgeSession(req: Request, res: Response, next: NextFunction) {
+    try {
+      const session = req.body?.session;
+
+      if (!session?.access_token || !session?.refresh_token) {
+        return res.status(400).json({
+          success: false,
+          error: 'Missing session tokens',
+        });
+      }
+
+      const supabase = createSupabaseServerClient();
+      const { data, error } = await supabase.auth.getUser(session.access_token);
+
+      if (error || !data.user) {
+        return res.status(401).json({
+          success: false,
+          error: 'Invalid session',
+        });
+      }
+
+      const expiresIn = typeof session.expires_at === 'number'
+        ? Math.max(session.expires_at - Math.floor(Date.now() / 1000), 0)
+        : session.expires_in || 3600;
+
+      setAuthCookies(res, {
+        access_token: session.access_token,
+        refresh_token: session.refresh_token,
+        expires_in: expiresIn,
+        expires_at: session.expires_at,
+        token_type: session.token_type || 'bearer',
+        user: data.user,
+      } as Session);
+
+      return res.status(200).json({
+        success: true,
+        data: {
+          user: serializeUser(data.user),
+        },
+      });
+    } catch (error) {
+      logger.error('Bridge session failed', error);
+      return next(error);
+    }
+  },
+
   async session(req: Request, res: Response, next: NextFunction) {
     try {
       const accessToken = req.cookies?.[ACCESS_COOKIE];

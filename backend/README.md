@@ -119,7 +119,7 @@ Server will start at `http://localhost:3001`
 If you want Google sign-in locally, add this redirect URL in Supabase:
 
 ```text
-http://localhost:3001/api/auth/google/callback
+http://localhost:3000/auth/callback
 ```
 
 On Render, set `CORS_ORIGINS` to your frontend URL, for example:
@@ -127,6 +127,8 @@ On Render, set `CORS_ORIGINS` to your frontend URL, for example:
 ```text
 https://email-scheduler-system-front-end.onrender.com
 ```
+
+For Google auth, the frontend now starts the OAuth flow and the callback page bridges the Supabase session into the backend with `POST /api/auth/bridge-session`.
 
 ### 5. Start the BullMQ Worker
 
@@ -181,13 +183,14 @@ DELETE /api/emails/:id
 ```bash
 POST /api/auth/signup
 POST /api/auth/login
+POST /api/auth/bridge-session
 GET /api/auth/google
 GET /api/auth/google/callback
 GET /api/auth/session
 POST /api/auth/logout
 ```
 
-`GET /api/auth/google` starts the Google OAuth flow from the backend. The callback route exchanges the code, stores the backend auth cookies, and redirects back to the frontend callback page.
+`POST /api/auth/bridge-session` is called by the frontend callback page after Supabase finishes the OAuth handshake, so the backend can store its own auth cookies. The legacy `/api/auth/google` routes remain available, but the current login flow uses the frontend callback route.
 
 `scheduledTime` controls the BullMQ delay, so jobs run when the email is due.
 For bulk sends, `delayBetweenEmails` and `hourlyLimit` control spacing between queued jobs.

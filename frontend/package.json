@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.10.2",
     "crypto-js": "^4.2.0",
     "js-md5": "^0.8.3",
     "next": "^14.0.0",

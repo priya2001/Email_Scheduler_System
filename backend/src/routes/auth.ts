@@ -5,6 +5,7 @@ const router = Router();
 
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
+router.post('/bridge-session', authController.bridgeSession);
 router.get('/google', authController.googleStart);
 router.get('/google/callback', authController.googleCallback);
 router.get('/session', authController.session);
