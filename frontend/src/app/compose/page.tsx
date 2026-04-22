@@ -214,14 +214,17 @@ export default function ComposeEmail() {
             type="button"
             onClick={() => setShowSendLater(!showSendLater)}
             title="Schedule"
-            className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
+            className={`relative flex h-10 w-10 items-center justify-center rounded-full transition ${
               scheduledTime
-                ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500 shadow-sm'
+                ? 'bg-emerald-600 text-white shadow-md ring-2 ring-emerald-200'
                 : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
             }`}
             aria-pressed={Boolean(scheduledTime)}
           >
             <Clock3 className="h-5 w-5" strokeWidth={scheduledTime ? 2.5 : 2} />
+            {scheduledTime && (
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-400" />
+            )}
           </button>
           <button
             type="button"
