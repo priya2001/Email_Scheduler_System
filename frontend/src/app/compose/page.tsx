@@ -10,6 +10,7 @@ import {
   Clock3,
   Paperclip,
   Send,
+  Upload,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
@@ -75,6 +76,7 @@ export default function ComposeEmail() {
   const [showSendLater, setShowSendLater] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
+  const [uploadLabel, setUploadLabel] = useState('Upload List');
 
   const presetTimes = useMemo(() => {
     const tomorrow = new Date();
@@ -122,6 +124,85 @@ export default function ComposeEmail() {
 
   const handleRemoveRecipient = (email: string) => {
     setRecipients(recipients.filter((r) => r !== email));
+  };
+
+  const extractEmailsFromCsv = (text: string) => {
+    const lines = text
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (lines.length === 0) {
+      return [];
+    }
+
+    const rows = lines.map((line) =>
+      line
+        .split(',')
+        .map((cell) => cell.trim().replace(/^"|"$/g, ''))
+        .filter(Boolean),
+    );
+
+    const header = rows[0].map((cell) => cell.toLowerCase());
+    const emailColumnIndex =
+      header.indexOf('email') !== -1
+        ? header.indexOf('email')
+        : header.indexOf('email address') !== -1
+          ? header.indexOf('email address')
+          : -1;
+
+    const emailRegex = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+    const collected: string[] = [];
+
+    rows.forEach((row, rowIndex) => {
+      const cellsToInspect = rowIndex === 0 && emailColumnIndex !== -1 ? [] : row;
+
+      if (rowIndex > 0 && emailColumnIndex !== -1) {
+        const cell = row[emailColumnIndex];
+        if (cell && emailRegex.test(cell)) {
+          collected.push(cell.match(emailRegex)?.[0] || cell);
+        }
+        return;
+      }
+
+      cellsToInspect.forEach((cell) => {
+        const match = cell.match(emailRegex);
+        if (match?.[0]) {
+          collected.push(match[0]);
+        }
+      });
+    });
+
+    return Array.from(new Set(collected.map((email) => email.trim().toLowerCase())));
+  };
+
+  const handleUploadRecipients = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    try {
+      const text = await file.text();
+      const uploadedEmails = extractEmailsFromCsv(text);
+
+      if (uploadedEmails.length === 0) {
+        setError('No email addresses found in the CSV file.');
+        return;
+      }
+
+      setRecipients((current) => Array.from(new Set([...current, ...uploadedEmails])));
+      setError('');
+      setUploadLabel(`${uploadedEmails.length} loaded`);
+    } catch (uploadError) {
+      console.error('Failed to parse uploaded CSV', uploadError);
+      setError('Unable to read the CSV file.');
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const handleSelectTime = (time: string) => {
@@ -259,6 +340,18 @@ export default function ComposeEmail() {
               <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
                 <label className="text-[14px] text-slate-900">To</label>
                 <div className="min-w-0 border-b border-slate-200 pb-2">
+                  <div className="mb-2 flex items-center justify-end">
+                    <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[12px] text-slate-600 transition hover:bg-slate-50 hover:text-slate-900">
+                      <Upload className="h-3.5 w-3.5" />
+                      {uploadLabel}
+                      <input
+                        type="file"
+                        accept=".csv,text/csv"
+                        onChange={handleUploadRecipients}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2">
                     {recipients.map((email) => (
                       <div key={email} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[13px] text-slate-800">
