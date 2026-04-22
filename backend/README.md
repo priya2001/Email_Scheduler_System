@@ -148,6 +148,17 @@ GET /health
 GET /health/ready
 ```
 
+### Email API
+
+```bash
+POST /api/emails
+POST /api/emails/bulk
+GET /api/emails
+GET /api/emails/:id
+PUT /api/emails/:id
+DELETE /api/emails/:id
+```
+
 Response:
 ```json
 {
@@ -183,6 +194,7 @@ body (Text) → Email body
 scheduledTime (DateTime) → When to send
 status (Enum) → PENDING | SENT | FAILED
 senderId (UUID) → Foreign key to Senders
+batchId (String) → Shared batch ID for bulk-created emails
 sentAt (DateTime) → When email was sent
 errorMessage (String) → Failure reason
 createdAt (DateTime)
