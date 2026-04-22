@@ -20,7 +20,7 @@ const worker = createEmailWorker();
 
 // CORS configuration
 app.use(cors({
-  origin: environment.frontendUrl,
+  origin: '*',
   credentials: true,
   optionsSuccessStatus: 200,
 }));
@@ -102,7 +102,6 @@ const server = app.listen(PORT, async () => {
   logger.info(`Server started successfully`, {
     port: PORT,
     environment: environment.nodeEnv,
-    apiUrl: environment.apiUrl,
   });
 
   // Test database connection
