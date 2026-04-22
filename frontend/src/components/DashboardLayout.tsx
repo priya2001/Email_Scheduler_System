@@ -92,15 +92,15 @@ export default function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-white text-slate-900">
-      <aside className="flex w-[326px] shrink-0 flex-col border-r border-slate-200 bg-white px-3 py-4">
+      <aside className="flex w-[300px] shrink-0 flex-col border-r border-slate-200 bg-white px-3 py-4">
         <div className="px-2 pb-5">
-          <h1 className="select-none text-6xl font-black leading-none tracking-[-0.08em] text-slate-900">ONG</h1>
+          <h1 className="select-none text-[3.2rem] font-black leading-none tracking-[-0.08em] text-slate-900">ONG</h1>
         </div>
 
         <div className="relative px-2">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex w-full items-center gap-3 rounded-3xl bg-slate-100 px-3 py-3.5 text-left transition hover:bg-slate-200/60"
+            className="flex w-full items-center gap-3 rounded-3xl bg-slate-100 px-3 py-3 text-left transition hover:bg-slate-200/60"
           >
             {profilePhotoUrl ? (
               <img src={profilePhotoUrl} alt="Profile" className="h-11 w-11 rounded-full object-cover" />
@@ -110,8 +110,8 @@ export default function DashboardLayout({
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <p className="truncate text-lg leading-tight text-slate-900">{user?.email?.split('@')[0] || 'Oliver Brown'}</p>
-              <p className="truncate text-[15px] leading-tight text-slate-500">{user?.email || 'oliver.brown@domain.io'}</p>
+              <p className="truncate text-[15px] leading-tight text-slate-900">{user?.email?.split('@')[0] || 'Oliver Brown'}</p>
+              <p className="truncate text-[13px] leading-tight text-slate-500">{user?.email || 'oliver.brown@domain.io'}</p>
             </div>
             <ChevronDown className={`h-5 w-5 shrink-0 text-slate-400 transition ${showUserMenu ? 'rotate-180' : ''}`} />
           </button>
@@ -132,15 +132,15 @@ export default function DashboardLayout({
         <div className="px-2 py-5">
           <button
             onClick={() => router.push('/compose')}
-            className="flex w-full items-center justify-center rounded-full border-2 border-emerald-500 px-4 py-4 text-[22px] font-medium text-emerald-600 transition hover:bg-emerald-50"
+            className="flex w-full items-center justify-center rounded-full border-2 border-emerald-500 px-4 py-3 text-[18px] font-medium text-emerald-600 transition hover:bg-emerald-50"
           >
-            <PenLine className="mr-3 h-6 w-6" />
+            <PenLine className="mr-2.5 h-5 w-5" />
             Compose
           </button>
         </div>
 
         <div className="px-2 pt-2">
-          <p className="mb-4 px-4 text-[13px] font-medium uppercase tracking-[0.12em] text-slate-400">Core</p>
+          <p className="mb-4 px-4 text-xs font-medium uppercase tracking-[0.12em] text-slate-400">Core</p>
           <div className="space-y-1.5">
             {categories.map((category) => {
               const Icon = category.icon;
@@ -150,15 +150,15 @@ export default function DashboardLayout({
                 <button
                   key={category.id}
                   onClick={() => onCategoryChange(category.id)}
-                  className={`flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left transition ${
+                className={`flex w-full items-center justify-between rounded-2xl px-4 py-3.5 text-left transition ${
                     active ? 'bg-emerald-100/70 text-slate-900' : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
                   <span className="flex items-center gap-3">
                     <Icon className="h-5 w-5 shrink-0 text-slate-600" />
-                    <span className="text-[22px] leading-none font-medium">{category.label}</span>
+                    <span className="text-[17px] leading-none font-medium">{category.label}</span>
                   </span>
-                  <span className={`text-[18px] leading-none ${active ? 'text-slate-500' : 'text-slate-500'}`}>{category.count}</span>
+                  <span className={`text-[15px] leading-none ${active ? 'text-slate-500' : 'text-slate-500'}`}>{category.count}</span>
                 </button>
               );
             })}
@@ -167,17 +167,17 @@ export default function DashboardLayout({
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col bg-white">
-        <header className="flex items-center gap-4 border-b border-slate-200 px-8 py-6">
+        <header className="flex items-center gap-4 border-b border-slate-200 px-6 py-4">
           <div className="relative flex min-w-0 flex-1 items-center">
             <div className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2">
-              <Search className="h-5 w-5 text-slate-400" />
+              <Search className="h-4.5 w-4.5 text-slate-400" />
             </div>
             <input
               type="text"
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="h-[54px] w-full rounded-full bg-slate-50 pl-14 pr-5 text-[19px] text-slate-700 placeholder:text-slate-400 outline-none ring-0 transition focus:bg-white focus:shadow-[0_0_0_1px_rgba(148,163,184,0.25)]"
+              className="h-14 w-full rounded-full bg-slate-50 pl-14 pr-5 text-[15px] text-slate-700 placeholder:text-slate-400 outline-none ring-0 transition focus:bg-white focus:shadow-[0_0_0_1px_rgba(148,163,184,0.25)]"
             />
           </div>
 
