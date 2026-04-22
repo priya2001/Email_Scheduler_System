@@ -1,35 +1,78 @@
 import { Request, Response, NextFunction } from 'express';
+import { v4 as uuidv4 } from 'uuid';
+import { EmailStatus, Prisma } from '@prisma/client';
 import { prismaClient } from '../config/database';
 import { logger } from '../utils/logger';
+
+type ApiEmailStatus = 'scheduled' | 'sent' | 'draft';
+type EmailWithSender = Prisma.EmailGetPayload<{
+  include: { sender: true };
+}>;
+
+interface EmailResponse {
+  id: string;
+  recipient: string;
+  subject: string;
+  preview: string;
+  scheduledTime: string;
+  status: ApiEmailStatus;
+  from: string;
+  batchId?: string | null;
+}
+
+function formatEmailResponse(email: {
+  id: string;
+  toEmail: string;
+  subject: string;
+  body: string;
+  scheduledTime: Date;
+  status: EmailStatus;
+  sender: { email: string };
+  batchId?: string | null;
+}): EmailResponse {
+  return {
+    id: email.id,
+    recipient: email.toEmail,
+    subject: email.subject,
+    preview: email.body ? email.body.substring(0, 100) : '',
+    scheduledTime: email.scheduledTime.toLocaleString('en-US', {
+      weekday: 'short',
+      hour: 'numeric',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
+    }),
+    status: email.status === 'PENDING' ? 'scheduled' : email.status === 'SENT' ? 'sent' : 'draft',
+    from: email.sender.email,
+    batchId: email.batchId ?? null,
+  };
+}
+
+async function resolveSender(from: string) {
+  return prismaClient.sender.upsert({
+    where: { email: from },
+    update: {},
+    create: {
+      email: from,
+      name: from.split('@')[0],
+    },
+  });
+}
 
 // Create a new email
 export const createEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { from, to, subject, body, scheduledTime, delayBetweenEmails, hourlyLimit } = req.body;
+    const { from, to, subject, body, scheduledTime } = req.body;
 
-    // Validation
-    if (!to || !subject) {
-      return res.status(400).json({
+    if (!from || !to || !subject) {
+      return void res.status(400).json({
         success: false,
-        error: 'Missing required fields: to, subject',
+        error: 'Missing required fields: from, to, subject',
       });
     }
 
-    // Get or create sender
-    let sender = await prismaClient.sender.findFirst({
-      where: { email: from },
-    });
+    const sender = await resolveSender(from);
 
-    if (!sender) {
-      sender = await prismaClient.sender.create({
-        data: {
-          email: from,
-          name: from.split('@')[0],
-        },
-      });
-    }
-
-    // Create email with toEmail field and proper status mapping
     const email = await prismaClient.email.create({
       data: {
         senderId: sender.id,
@@ -46,28 +89,90 @@ export const createEmail = async (req: Request, res: Response, next: NextFunctio
 
     logger.info(`Email created: ${email.id}`);
 
-    // Format response to match frontend expectations
-    res.status(201).json({
+    return void res.status(201).json({
       success: true,
-      data: {
-        id: email.id,
-        recipient: email.toEmail,
-        subject: email.subject,
-        preview: email.body ? email.body.substring(0, 100) : '',
-        scheduledTime: email.scheduledTime.toLocaleString('en-US', {
-          weekday: 'short',
-          hour: 'numeric',
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: true,
-        }),
-        status: 'scheduled',
-        from: email.sender.email,
-      },
+      data: formatEmailResponse(email),
     });
   } catch (error: any) {
     logger.error('Error creating email:', error);
-    next(error);
+    return next(error);
+  }
+};
+
+// Create emails in bulk
+export const createBulkEmails = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { from, recipients, subject, body, scheduledTime } = req.body;
+
+    if (!from || !Array.isArray(recipients) || recipients.length === 0 || !subject) {
+      return void res.status(400).json({
+        success: false,
+        error: 'Missing required fields: from, recipients, subject',
+      });
+    }
+
+    const normalizedRecipients = Array.from(
+      new Set(
+        recipients
+          .map((recipient: string) => recipient.trim())
+          .filter((recipient: string) => recipient.length > 0)
+      )
+    );
+
+    if (normalizedRecipients.length === 0) {
+      return void res.status(400).json({
+        success: false,
+        error: 'At least one valid recipient is required',
+      });
+    }
+
+    const sender = await resolveSender(from);
+    const batchId = uuidv4();
+    const scheduledDate = scheduledTime ? new Date(scheduledTime) : new Date();
+
+    const createdEmails = await prismaClient.$transaction(async (tx) => {
+      const results: EmailWithSender[] = [];
+
+      for (const recipient of normalizedRecipients) {
+        const email = await tx.email.create({
+          data: {
+            senderId: sender.id,
+            toEmail: recipient,
+            subject,
+            body: body || '',
+            scheduledTime: scheduledDate,
+            status: 'PENDING',
+            batchId,
+          },
+          include: {
+            sender: true,
+          },
+        });
+
+        results.push(email);
+      }
+
+      return results;
+    });
+
+    logger.info('Bulk email batch created', {
+      batchId,
+      totalRequested: recipients.length,
+      totalCreated: createdEmails.length,
+    });
+
+    return void res.status(201).json({
+      success: true,
+      data: {
+        batchId,
+        totalRecipients: recipients.length,
+        createdCount: createdEmails.length,
+        emails: createdEmails.map(formatEmailResponse),
+      },
+    });
+  } catch (error: any) {
+    logger.error('Error creating bulk emails:', error);
+    return next(error);
   }
 };
 
@@ -76,15 +181,14 @@ export const getEmails = async (req: Request, res: Response, next: NextFunction)
   try {
     const { status } = req.query;
 
-    // Map UI status to Prisma enum
-    let prismaStatus: any = undefined;
+    let prismaStatus: EmailStatus | undefined;
     if (status === 'scheduled' || status === 'draft') {
       prismaStatus = 'PENDING';
     } else if (status === 'sent') {
       prismaStatus = 'SENT';
     }
 
-    const where = prismaStatus ? { status: prismaStatus } : {};
+    const where: Prisma.EmailWhereInput = prismaStatus ? { status: prismaStatus } : {};
 
     const emails = await prismaClient.email.findMany({
       where,
@@ -96,30 +200,15 @@ export const getEmails = async (req: Request, res: Response, next: NextFunction)
       },
     });
 
-    // Format response
-    const formattedEmails = emails.map((email) => ({
-      id: email.id,
-      recipient: email.toEmail,
-      subject: email.subject,
-      preview: email.body ? email.body.substring(0, 100) : '',
-      scheduledTime: email.scheduledTime.toLocaleString('en-US', {
-        weekday: 'short',
-        hour: 'numeric',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: true,
-      }),
-      status: email.status === 'PENDING' ? 'scheduled' : email.status === 'SENT' ? 'sent' : 'draft',
-      from: email.sender.email,
-    }));
+    const formattedEmails = emails.map(formatEmailResponse);
 
-    res.status(200).json({
+    return void res.status(200).json({
       success: true,
       data: formattedEmails,
     });
   } catch (error: any) {
     logger.error('Error fetching emails:', error);
-    next(error);
+    return next(error);
   }
 };
 
@@ -136,19 +225,19 @@ export const getEmail = async (req: Request, res: Response, next: NextFunction) 
     });
 
     if (!email) {
-      return res.status(404).json({
+      return void res.status(404).json({
         success: false,
         error: 'Email not found',
       });
     }
 
-    res.status(200).json({
+    return void res.status(200).json({
       success: true,
-      data: email,
+      data: formatEmailResponse(email),
     });
   } catch (error: any) {
     logger.error('Error fetching email:', error);
-    next(error);
+    return next(error);
   }
 };
 
@@ -158,8 +247,7 @@ export const updateEmail = async (req: Request, res: Response, next: NextFunctio
     const { id } = req.params;
     const { status, scheduledTime, subject, body } = req.body;
 
-    // Map UI status to Prisma enum if provided
-    let prismaStatus: any = undefined;
+    let prismaStatus: EmailStatus | undefined;
     if (status === 'sent') {
       prismaStatus = 'SENT';
     } else if (status === 'scheduled' || status === 'draft') {
@@ -174,17 +262,20 @@ export const updateEmail = async (req: Request, res: Response, next: NextFunctio
         ...(subject && { subject }),
         ...(body && { body }),
       },
+      include: {
+        sender: true,
+      },
     });
 
     logger.info(`Email updated: ${email.id}`);
 
-    res.status(200).json({
+    return void res.status(200).json({
       success: true,
-      data: email,
+      data: formatEmailResponse(email),
     });
   } catch (error: any) {
     logger.error('Error updating email:', error);
-    next(error);
+    return next(error);
   }
 };
 
@@ -199,12 +290,12 @@ export const deleteEmail = async (req: Request, res: Response, next: NextFunctio
 
     logger.info(`Email deleted: ${id}`);
 
-    res.status(200).json({
+    return void res.status(200).json({
       success: true,
       message: 'Email deleted successfully',
     });
   } catch (error: any) {
     logger.error('Error deleting email:', error);
-    next(error);
+    return next(error);
   }
 };

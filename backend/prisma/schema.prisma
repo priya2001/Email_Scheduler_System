@@ -35,6 +35,7 @@ model Email {
   status        EmailStatus @default(PENDING)
   senderId      String
   sender        Sender   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  batchId       String?
   sentAt        DateTime?
   errorMessage  String?
   createdAt     DateTime @default(now())
@@ -45,6 +46,7 @@ model Email {
   @@index([scheduledTime])
   @@index([status])
   @@index([toEmail])
+  @@index([batchId])
   @@index([createdAt])
 }
 
