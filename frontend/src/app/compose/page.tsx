@@ -216,11 +216,12 @@ export default function ComposeEmail() {
             title="Schedule"
             className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
               scheduledTime
-                ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-200'
+                ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500 shadow-sm'
                 : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
             }`}
+            aria-pressed={Boolean(scheduledTime)}
           >
-            <Clock3 className="h-5 w-5" />
+            <Clock3 className="h-5 w-5" strokeWidth={scheduledTime ? 2.5 : 2} />
           </button>
           <button
             type="button"
