@@ -2,6 +2,43 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+
+const ReactQuill = dynamic(() => import('react-quill').then(mod => {
+  require('react-quill/dist/quill.snow.css');
+  return mod;
+}), { ssr: false });
+
+const modules = {
+  toolbar: [
+    ['undo', 'redo'],
+    [{ 'font': ['Arial', 'Courier New', 'Georgia', 'Times New Roman', 'Trebuchet MS', 'Verdana'] }],
+    [{ 'size': ['small', false, 'large', 'huge'] }],
+    [{ 'header': [1, 2, 3, false] }],
+    ['bold', 'italic', 'underline', 'strike'],
+    [{ 'script': 'sub'}, { 'script': 'super' }],
+    ['blockquote', 'code-block'],
+    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+    [{ 'indent': '-1'}, { 'indent': '+1' }],
+    [{ 'color': [] }, { 'background': [] }],
+    [{ 'align': [] }],
+    ['link', 'image'],
+    ['clean']
+  ],
+};
+
+const formats = [
+  'undo', 'redo',
+  'font', 'size',
+  'header',
+  'bold', 'italic', 'underline', 'strike',
+  'script',
+  'blockquote', 'code-block',
+  'list', 'indent',
+  'color', 'background',
+  'align',
+  'link', 'image'
+];
 
 export default function ComposeEmail() {
   const router = useRouter();
@@ -190,31 +227,21 @@ export default function ComposeEmail() {
               </div>
             </div>
 
-            {/* Formatting Toolbar */}
-            <div className="flex items-center gap-2 pt-4 border-t border-gray-200">
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600 text-lg">↶</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600 text-lg">↷</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600 font-bold">A</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600 font-bold italic">I</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600 font-bold underline">U</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600">≡</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600">◆</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600">1.</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600">•</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600">&lt;&gt;</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600">«</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600">∞</button>
-              <button className="p-2 hover:bg-gray-100 rounded text-gray-600">S</button>
+            {/* Formatting Toolbar & Compose Area */}
+            <div className="pt-4 border-t border-gray-200">
+              <div style={{ height: '400px' }}>
+                <ReactQuill
+                  theme="snow"
+                  value={body}
+                  onChange={setBody}
+                  modules={modules}
+                  formats={formats}
+                  placeholder="Type Your Reply..."
+                  style={{ height: '100%' }}
+                />
+              </div>
             </div>
-
-            {/* Compose Area */}
-            <textarea
-              placeholder="Type Your Reply..."
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              className="w-full outline-none text-base bg-white placeholder-gray-400 border border-gray-200 rounded p-4 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              rows={12}
-            />
+            <div className="h-24"></div>
           </div>
         </div>
 

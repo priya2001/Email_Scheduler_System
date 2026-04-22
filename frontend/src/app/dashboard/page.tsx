@@ -20,6 +20,7 @@ export default function Dashboard() {
   const [emails, setEmails] = useState<Email[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<'scheduled' | 'sent' | 'draft'>('scheduled');
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
   const supabase = useSupabase();
 
@@ -117,8 +118,10 @@ export default function Dashboard() {
       selectedCategory={selectedCategory}
       onCategoryChange={setSelectedCategory}
       emails={emails}
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
     >
-      <EmailList emails={emails} category={selectedCategory} />
+      <EmailList emails={emails} category={selectedCategory} searchQuery={searchQuery} />
     </DashboardLayout>
   );
 }

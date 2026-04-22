@@ -82,9 +82,9 @@ app.use((err: AppError, req: Request, res: Response, next: NextFunction) => {
 async function testDatabaseConnection(): Promise<void> {
   try {
     await prismaClient.$queryRaw`SELECT 1`;
-    logger.info('✅ Database connection successful');
+    logger.info('Database connection successful');
   } catch (error) {
-    logger.error('❌ Database connection failed', error);
+    logger.error('Database connection failed', error);
     // Don't exit - allow the server to keep running for health checks
     if (environment.nodeEnv === 'production') {
       logger.warn('Running in production mode but database connection failed');
@@ -99,7 +99,7 @@ async function testDatabaseConnection(): Promise<void> {
 const PORT = environment.port;
 
 const server = app.listen(PORT, async () => {
-  logger.info(`🚀 Server started successfully`, {
+  logger.info(`Server started successfully`, {
     port: PORT,
     environment: environment.nodeEnv,
     apiUrl: environment.apiUrl,

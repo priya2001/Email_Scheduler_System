@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
+import CryptoJS from 'crypto-js';
 
 interface Email {
   id: string;
@@ -19,6 +20,8 @@ interface DashboardLayoutProps {
   selectedCategory: 'scheduled' | 'sent' | 'draft';
   onCategoryChange: (category: 'scheduled' | 'sent' | 'draft') => void;
   emails: Email[];
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export default function DashboardLayout({
@@ -27,10 +30,28 @@ export default function DashboardLayout({
   selectedCategory,
   onCategoryChange,
   emails,
+  searchQuery = '',
+  onSearchChange = () => {},
 }: DashboardLayoutProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string>('');
   const supabase = useSupabase();
   const router = useRouter();
+
+  // Initialize profile photo on mount
+  useEffect(() => {
+    if (user?.email) {
+      // Generate MD5 hash of the email for Gravatar
+      // Gravatar uses MD5 hash of lowercase email for fetching profile photos
+      const trimmedEmail = user.email.toLowerCase().trim();
+      const hash = CryptoJS.MD5(trimmedEmail).toString();
+      
+      // Gravatar URL - will fetch real profile photo if user has Gravatar account
+      // d=identicon provides fallback avatar if no Gravatar profile exists
+      const gravatarUrl = `https://www.gravatar.com/avatar/${hash}?d=identicon&s=40`;
+      setProfilePhotoUrl(gravatarUrl);
+    }
+  }, [user?.email]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -68,16 +89,24 @@ export default function DashboardLayout({
         <div className="p-6 border-b border-gray-200 relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="w-full flex items-center gap-3 hover:bg-gray-50 p-3 rounded-lg transition"
+            className="w-full flex items-center gap-2 hover:bg-gray-50 p-2 rounded-lg transition"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-              {userInitials || 'OB'}
-            </div>
-            <div className="text-left flex-1">
+            {profilePhotoUrl ? (
+              <img
+                src={profilePhotoUrl}
+                alt="Profile"
+                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                {userInitials || 'OB'}
+              </div>
+            )}
+            <div className="text-left flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-800">{user?.email?.split('@')[0]}</p>
               <p className="text-xs text-gray-500 truncate">{user?.email}</p>
             </div>
-            <span className="text-gray-400 text-xs">▼</span>
+            <span className="text-gray-400 text-xs flex-shrink-0">▼</span>
           </button>
 
           {showUserMenu && (
@@ -135,22 +164,23 @@ export default function DashboardLayout({
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Top Bar */}
-        <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-          <h2 className="text-lg font-bold text-gray-800">
-            {categories.find((c) => c.id === selectedCategory)?.label}
-          </h2>
-          <div className="flex items-center gap-4">
-            <input
-              type="text"
-              placeholder="Search"
-              className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 bg-gray-50"
-            />
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-500">
-              ⚙️
-            </button>
-            <button className="p-2 hover:bg-gray-100 rounded-lg transition text-gray-500">
-              🔄
-            </button>
+        <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-6 flex-1">
+            <h2 className="text-lg font-bold text-gray-800 whitespace-nowrap">
+              {categories.find((c) => c.id === selectedCategory)?.label}
+            </h2>
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg px-4 py-2 flex-1 max-w-2xl">
+              <span className="text-gray-500 flex-shrink-0">🔍</span>
+              <input
+                type="text"
+                placeholder="Search emails..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="bg-gray-100 text-sm focus:outline-none text-gray-800 placeholder-gray-500 w-full"
+              />
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
           </div>
         </div>
 

@@ -12,10 +12,21 @@ interface Email {
 interface EmailListProps {
   emails: Email[];
   category: 'scheduled' | 'sent' | 'draft';
+  searchQuery?: string;
 }
 
-export default function EmailList({ emails, category }: EmailListProps) {
-  const filteredEmails = emails.filter((email) => email.status === category);
+export default function EmailList({ emails, category, searchQuery = '' }: EmailListProps) {
+  let filteredEmails = emails.filter((email) => email.status === category);
+  
+  // Apply search filter
+  if (searchQuery.trim()) {
+    const query = searchQuery.toLowerCase();
+    filteredEmails = filteredEmails.filter((email) =>
+      email.recipient.toLowerCase().includes(query) ||
+      email.subject.toLowerCase().includes(query) ||
+      email.preview?.toLowerCase().includes(query)
+    );
+  }
 
   if (filteredEmails.length === 0) {
     return (
