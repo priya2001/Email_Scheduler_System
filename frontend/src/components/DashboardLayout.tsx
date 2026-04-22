@@ -169,8 +169,8 @@ export default function DashboardLayout({
       <main className="flex min-w-0 flex-1 flex-col bg-white">
         <header className="flex items-center gap-3 border-b border-slate-200 px-4 py-2.5">
           <div className="relative flex min-w-0 flex-1 items-center">
-            <div className="pointer-events-none absolute left-4.5 top-1/2 -translate-y-1/2">
-              <Search className="h-3.5 w-3.5 text-slate-400" />
+            <div className="pointer-events-none absolute inset-y-0 left-4 flex items-center">
+              <Search className="h-4 w-4 text-slate-400" />
             </div>
             <input
               type="text"
